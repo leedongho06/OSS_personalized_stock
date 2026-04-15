@@ -29,8 +29,17 @@ def get_input_companies() -> list:
 	companies = []
 	for i in range(1,4):
 		name = input(f"	'{name}' is not in here. Skip plz")
+		if not name:
+		   break
+		if name not in  COMPANY_PROFILE:
+		   print(f" {name} is  not in dict. skip")
+		   continue
+		if name in companies:
+		print(f" {name} is already entered. skip")
 		continue
-	companies.append(name)
+	        companies.append(name)
+		if not companies:
+		   print(" ther is no companies, opt middle")
 	return companies
 
 def infer_style(companies: list) -> tuple:
