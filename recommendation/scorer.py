@@ -1,74 +1,73 @@
 COMPANY_PROFILE = {
-	"samsung" : {"sector ":"IT",	"per": 15.2,	"volatility": "M"},
-	"SK_hynix" : {"sector":"IT",	"per":22.1,	"volatility": "H"},
-	"NAVER" : {"sector":"coummunication", "per":38.4, "volatility":"H"},
-	"Shinhan" : {"sector":"Finance" , "per":7.8, "volatility":"L"},
-	"SK_telecom" : {"sector":"Utility", "per":12.3, "volatility":"L"},
-	"Celltrion" : {"sector":"HealthCare", "per":45.2, "volatility":"H"},
-	"Kakao" : {"sector":"communication", "per":55.0, "volatility":"H"},
-	"Hyundai_Motors" : {"sector" : "Industrial_goods" , "per":6.5, "volatility":"M"},
-	"Lg_chemistry" : {"sector": "Chemistry", "per":20.1, "volatility":"M"}
+    "삼성전자": {"sector": "IT",           "per": 15.2, "volatility": "중"},
+    "SK하이닉스": {"sector": "IT",          "per": 22.1, "volatility": "고"},
+    "NAVER":     {"sector": "커뮤니케이션", "per": 38.4, "volatility": "고"},
+    "신한지주":  {"sector": "금융",          "per": 7.8,  "volatility": "저"},
+    "SK텔레콤":  {"sector": "유틸리티",      "per": 12.3, "volatility": "저"},
+    "셀트리온":  {"sector": "헬스케어",      "per": 45.2, "volatility": "고"},
+    "카카오":    {"sector": "커뮤니케이션",  "per": 55.0, "volatility": "고"},
+    "현대차":    {"sector": "산업재",        "per": 6.5,  "volatility": "중"},
+    "LG화학":    {"sector": "소재",          "per": 20.1, "volatility": "중"},
 }
 
-VOLATILITY_SCORE = {"L":0, "M":1, "H":2}
+VOLATILITY_SCORE = {"저": 0, "중": 1, "고": 2}
 SECTOR_SCORE = {
-	"Finance" :0 , "Utility":0,
-	"HealthCare":1, "Industrial_goods":1, "Chemistry":1,
-	"IT":2, "communicaiton":2
+    "금융": 0, "유틸리티": 0, "필수소비재": 0,
+    "헬스케어": 1, "산업재": 1, "소재": 1,
+    "IT": 2, "커뮤니케이션": 2, "임의소비재": 2,
+}
+STYLE_MAP = {
+    (0, 3): "안정형",
+    (4, 6): "중립형",
+    (7, 9): "공격형",
 }
 
-STYLE_MAP = {
-	(0,3) : "Safety",
-	(4,6) : "Middle",
-	(7,9) : "Offensive"
-}
 
 def get_input_companies() -> list:
-	print("\n[Company]")
-	print(f"Input : {', '.join(COMPANY_PROFILE.keys())}\n")
-	companies = []
-	for i in range(1,4):
-		name = input(f"	'{name}' is not in here. Skip plz")
-		if not name:
-		   break
-		if name not in  COMPANY_PROFILE:
-		   print(f" {name} is  not in dict. skip")
-		   continue
-		if name in companies:
-		print(f" {name} is already entered. skip")
-		continue
-	        companies.append(name)
-		if not companies:
-		   print(" ther is no companies, opt middle")
-	return companies
+    print("\n[ 관심 기업 입력 ]")
+    print(f"입력 가능: {', '.join(COMPANY_PROFILE.keys())}\n")
+    companies = []
+    for i in range(1, 4):
+        name = input(f"관심 기업 {i} (없으면 엔터): ").strip()
+        if not name:
+            break
+        if name not in COMPANY_PROFILE:
+            print(f"  '{name}'은 목록에 없어요. 건너뜁니다.")
+            continue
+        companies.append(name)
+    return companies
+
 
 def infer_style(companies: list) -> tuple:
-	if not companies:
-	  return "Middle",5,[]
-	analyses, total = [],0
-	for name in companies:
-		p = COMPANY_PROFILE[name]
-		score = VOLATILITY_SCORE[p["volatility"]] + SECTOR_SCORE.get(p["sector"],1)
-		analyses.append({
-			"name": name,
-			"sector": p["sector"],
-			"volatility": p["volatility"],
-			"score": score,
-}]
-		total += score
-		normalized = round((total/len(companies))*(9/4))
-		for(lo, hi), style in STYLE_MAP.item():
-			if lo <= normalized <= hi:
-				return style, normalized, analyses
+    if not companies:
+        return "중립형", 5, []
 
-		return "Middle",normailzed,analyses
+    analyses, total = [], 0
+    for name in companies:
+        p = COMPANY_PROFILE[name]
+        score = VOLATILITY_SCORE[p["volatility"]] + SECTOR_SCORE.get(p["sector"], 1)
+        analyses.append({
+            "name": name,
+            "sector": p["sector"],
+            "volatility": p["volatility"],
+            "score": score,
+        })
+        total += score
+
+    normalized = round((total / len(companies)) * (9 / 4))
+
+    for (lo, hi), style in STYLE_MAP.items():
+        if lo <= normalized <= hi:
+            return style, normalized, analyses
+
+    return "중립형", normalized, analyses
+
 
 def print_analysis(style: str, score: int, analyses: list):
-		print("\n [RESULT] ")
-		print(f"{'companies_name':<12}{'sector':<14} {'volatility':<6} score")
-		print("-"*20)
-		for a in analyses
-			print(f"{a['name']:<12} {a['sector']:<14 {a['volatility']:<6} {a['score']}")
-		print("-",20)
-		print(f"Tendency : {style} (score:{score})\n")
-
+    print("\n[ 선호 기업 분석 결과 ]")
+    print(f"{'기업명':<12} {'섹터':<14} {'변동성':<6} 점수")
+    print("-" * 42)
+    for a in analyses:
+        print(f"{a['name']:<12} {a['sector']:<14} {a['volatility']:<6} {a['score']}")
+    print("-" * 42)
+    print(f"추론된 투자 성향: {style} (점수: {score})\n")
