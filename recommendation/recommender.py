@@ -26,6 +26,7 @@ def recommend(df: pd.DataFrame, style:str, top_n: int = 5) -> pd.DataFrame:
 
 	result = df.copy()
 	result["score"] = scores
+	actual_n = min(top_n,len(result))
 	result = (
 		result.sort_values("score", ascending=False)
 		      .head(top_n)[["ticker","name","sector","per","pbr","score"]]
