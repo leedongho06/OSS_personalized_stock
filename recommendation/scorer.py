@@ -34,7 +34,14 @@ def get_input_companies() -> list:
         if name not in COMPANY_PROFILE:
             print(f"  '{name}'은 목록에 없어요. 건너뜁니다.")
             continue
+        if name in companies:
+            print(f"  '{name}'은 이미 입력했어요. 건너뜁니다.")
+            continue
         companies.append(name)
+
+    if not companies:
+        print("  입력된 기업이 없어 중립형으로 설정합니다.")
+
     return companies
 
 
