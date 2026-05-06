@@ -3,11 +3,8 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 
-# 특정 종목의 최근 데이터를 yfinance로 가져오는 함수
 def fetch_stock_data(ticker, days=30):
     try:
-        # yfinance는 한국 종목의 경우 '005930.KS' 형식을 사용해야 합니다.
-        # 만약 숫자로만 들어오면 자동으로 .KS를 붙여주는 안전장치
         if ticker.isdigit():
             full_ticker = ticker + ".KS"
         else:
@@ -16,7 +13,6 @@ def fetch_stock_data(ticker, days=30):
         end_date = datetime.now().strftime('%Y-%m-%d')
         start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
         
-        # 데이터 수집
         stock = yf.Ticker(full_ticker)
         df = stock.history(start=start_date, end=end_date)
         
@@ -24,7 +20,6 @@ def fetch_stock_data(ticker, days=30):
             print(f"[Warning] No data found for {full_ticker}")
             return pd.DataFrame()
             
-        # 인덱스(Date)를 컬럼으로 빼고 정렬
         df = df.reset_index()
         return df
     except Exception as e:
@@ -32,12 +27,29 @@ def fetch_stock_data(ticker, days=30):
         return pd.DataFrame()
 
 if __name__ == "__main__":
-    print("yfinance 데이터 수집 테스트 시작...")
-    # 삼성전자(005930.KS) 테스트
-    result = fetch_stock_data("005930")
+    # 1. 수집하고 싶은 종목 딕셔너리 (종목코드: 종목이름)
+    target_stocks = {
+        "005930": "삼성전자",
+        "000660": "SK하이닉스",
+        "005380": "현대차",
+        "035420": "NAVER",
+        "000880": "한화"
+    }
+
+    print("--- yfinance 다중 종목 데이터 수집 시작 ---")
     
-    if not result.empty:
-        print("\n--- 수집 성공 (최근 5일 데이터) ---")
-        print(result.tail())
-    else:
-        print("\n--- 수집 실패: 위 에러 메시지를 확인하세요 ---")
+    # 2. 반복문을 통해 각 종목별로 데이터 수집 및 출력
+    for ticker_code, ticker_name in target_stocks.items():
+        print(f"\n[{ticker_name} ({ticker_code})] 수집 중...")
+        
+        result = fetch_stock_data(ticker_code)
+        
+        if not result.empty:
+            print(f"--- {ticker_name} 최근 5일 데이터 ---")
+            # 가독성을 위해 Date, Open, High, Low, Close, Volume만 출력
+            cols_to_show = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
+            print(result[cols_to_show].tail())
+        else:
+            print(f"--- {ticker_name} 수집 실패 ---")
+
+    print("\n--- 모든 데이터 수집 작업 완료 ---")
