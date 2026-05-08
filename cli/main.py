@@ -13,10 +13,14 @@ def profile():
     
     risk_tolerance = click.prompt("투자 성향을 입력하세요 (안전/중립/공격)", type=str)
     capital = click.prompt("투자 예정 금액을 입력하세요 (단위: 만원)", type=int)
+    period = click.prompt("목표 투자 기간을 입력하세요 (단기/중기/장기)", type=str)
+    sector = click.prompt("선호 산업군을 입력하세요 (IT/제조/금융/상관없음)", type=str)
     
     user_data = {
         "risk_tolerance": risk_tolerance,
-        "capital": capital
+        "capital": capital,
+        "investment_period": period,
+        "preferred_sector": sector
     }
     
     profile_io.save_profile(user_data)
@@ -31,10 +35,16 @@ def recommend():
         click.echo("저장된 프로파일이 없습니다. 'python main.py profile'을 먼저 실행하여 프로파일을 생성하세요.")
         return
         
-    click.echo(f"\n[{user_data['risk_tolerance']}] 성향과 [{user_data['capital']}만원] 자본금 기반으로 종목을 분석합니다...")
+    # 기존 JSON 파일에 새 키가 없을 경우를 대비해 get() 메서드 사용
+    click.echo(f"\n[{user_data.get('risk_tolerance', '미입력')}] 성향, "
+               f"[{user_data.get('capital', 0)}만원] 자본금, "
+               f"[{user_data.get('investment_period', '미입력')}] 기간, "
+               f"[{user_data.get('preferred_sector', '미입력')}] 선호도를 기반으로 종목을 분석합니다...")
+    
     click.echo("\n[시스템: 알고리즘 모듈 미연동 - 더미 데이터 출력]")
     click.echo("추천 종목 1: 삼성전자")
     click.echo("추천 종목 2: 현대차")
 
 if __name__ == '__main__':
     cli()
+
