@@ -32,7 +32,7 @@ def load_data_from_db(db_path="data/stock_data.db"):
         conn.close()
         
         # ★ 읽어온 직후 유효성 검사 수
-        DataValidator.validate_stock_d행ata(df)
+        DataValidator.validate_stock_data(df)
         print("[Info] DB 로드 및 유효성 검사 완료")
         
         return df

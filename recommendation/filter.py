@@ -16,10 +16,10 @@ def filter_by_style(df: pd.DataFrame, style: str) -> pd.DataFrame:
     # style 문자열의 대소문자 구분 없이 처리하기 위해 .capitalize() 사용
     target_style = style.capitalize() if style else "Middle"
 
-    if target_style == "Safety":
+    if target_style == "안정형":
         filtered_df = filtered_df[(filtered_df['per'] <= 50) & (filtered_df['pbr'] <= 2.0)]
         
-    elif target_style == "Offensive":
+    elif target_style == "공격형":
         # volume 컬럼이 있을 때만 필터링
         if 'volume' in filtered_df.columns:
             filtered_df = filtered_df[filtered_df['volume'] >= 100000]
