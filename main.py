@@ -41,7 +41,9 @@ def main():
         print("\n뉴스 데이터 수집 중...")
         news = fetch_all_news()
         news = add_sector_to_news(news)
-        picked = pick_balanced_news(news, n=5)
+        
+        # [수정 완료] pick_balanced_news -> pick_random_news로 이름 통일
+        picked = pick_random_news(news, n=5)
 
         print("\n[ 뉴스 관심도 평가 ]")
         print("각 뉴스에 별점을 매겨주세요 (1~5점)\n")
