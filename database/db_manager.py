@@ -1,11 +1,7 @@
 import sqlite3
 import pandas as pd
-import os
 
-# 현재 파일 위치를 기준으로 프로젝트 최상위 폴더 경로를 찾아 DB 연결
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(BASE_DIR)
-DB_PATH = os.path.join(ROOT_DIR, 'stock_data.db')
+DB_PATH = 'stock_data.db'
 
 # 1. 종목 기본 정보 저장
 def insert_stock(ticker, name):
@@ -39,44 +35,27 @@ def save_daily_data(ticker, df):
     finally:
         conn.close()
 
-# 4. 특정 종목의 기간별 주가 데이터 조회 (Read)
-def get_daily_prices(ticker, start_date=None, end_date=None):
+# 4. 일별 주가 데이터 조회
+def get_daily_prices(ticker):
     conn = sqlite3.connect(DB_PATH)
-    query = "SELECT * FROM daily_prices WHERE ticker = ?"
-    params = [ticker]
-    if start_date:
-        query += " AND date >= ?"
-        params.append(start_date)
-    if end_date:
-        query += " AND date <= ?"
-        params.append(end_date)
-    query += " ORDER BY date ASC"
-    df = pd.read_sql_query(query, conn, params=params)
+    query = f"SELECT * FROM daily_prices WHERE ticker = '{ticker}' ORDER BY date ASC"
+    df = pd.read_sql_query(query, conn)
     conn.close()
     return df
 
-# --- 테스트 실행 파트 ---
-if __name__ == "__main__":
-    print("--- 테스트 시작 ---")
-    insert_stock('005930', '삼성전자')
-    
-    dummy_df = pd.DataFrame({
-        'Date': ['2026-04-15', '2026-04-16'],
-        'Open': [70000, 71000],
-        'High': [72000, 73000],
-        'Low': [69000, 70000],
-        'Close': [71000, 72000],
-        'Volume': [1000000, 1100000]
-    })
-    print("가짜 주가 데이터를 저장해봅니다...")
-    save_daily_data('005930', dummy_df)
+# 5. [추가됨] 사용자 투자 성향 저장
+def insert_user(user_id, username, investment_type):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('INSERT OR REPLACE INTO users (user_id, username, investment_type) VALUES (?, ?, ?)', (user_id, username, investment_type))
+    conn.commit()
+    conn.close()
 
-    print("\n--- 저장된 삼성전자('005930') 데이터 조회를 시작합니다 ---")
-    fetched_df = get_daily_prices('005930', start_date='2026-04-15', end_date='2026-04-16')
-    
-    if not fetched_df.empty:
-        print("데이터 조회 성공!")
-        print(fetched_df)
-    else:
-        print("해당 기간의 데이터가 없습니다.")
-    print("--- 테스트 종료 ---")
+# 6. [추가됨] 사용자 정보 조회
+def get_user(user_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
