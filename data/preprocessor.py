@@ -26,6 +26,9 @@ def preprocess_stock_data(df):
     # 5. 중복 데이터 제거 (ticker와 date가 같은 데이터 방지)
     if 'date' in processed_df.columns:
         processed_df = processed_df.drop_duplicates(subset=['date'])
+    
+    if 'change' in processed_df.columns:
+        processed_df = processed_df.drop(columns=['change'])
 
     return processed_df
 
