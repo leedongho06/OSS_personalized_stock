@@ -17,7 +17,7 @@ def preprocess_stock_data(df):
     # 주식 데이터에서 결측치는 보통 전날 가격을 그대로 사용(Forward Fill)하거나
     # 데이터가 아예 없는 행은 삭제합니다.
     processed_df = processed_df.dropna(subset=['close']) # 종가가 없으면 삭제
-    processed_df = processed_df.fillna(method='ffill')   # 중간에 빈 값은 이전 값으로 채움
+    processed_df = processed_df.ffill()   # 중간에 빈 값은 이전 값으로 채움
 
     # 4. 날짜 형식 통일 (YYYY-MM-DD)
     if 'date' in processed_df.columns:
