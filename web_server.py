@@ -1,29 +1,43 @@
 from flask import Flask, jsonify
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from database.db_manager import get_daily_prices, get_user
 
 app = Flask(__name__)
 
-# 1. 기본 접속 확인용 화면
 @app.route('/')
 def home():
-    return "DB 연결 없이 단독으로 실행되는 백엔드 서버입니다!"
+    return "🚀 질문자님의 완벽한 DB가 연동된 강력한 백엔드 서버입니다!"
 
-# 2. 프론트엔드가 주가 데이터를 요청할 때 사용할 주소(API)
 @app.route('/api/stock/<ticker>', methods=['GET'])
 def get_stock_data(ticker):
-    
-    # DB에 연결하는 대신, 서버 코드 안에서 직접 가짜 데이터를 만들어줍니다.
-    dummy_data = [
-        {"date": "2026-04-15", "open": 70000, "high": 72000, "low": 69000, "close": 71000, "volume": 1000000},
-        {"date": "2026-04-16", "open": 71000, "high": 73000, "low": 70000, "close": 72000, "volume": 1100000},
-        {"date": "2026-04-17", "open": 72000, "high": 74000, "low": 71000, "close": 73000, "volume": 1200000}
-    ]
-    
-    # 요청 들어온 종목 코드가 삼성전자(005930)일 때만 가짜 데이터 전송
-    if ticker == '005930':
-        return jsonify(dummy_data)
-    else:
-        return jsonify({"error": "해당 종목의 데이터가 없습니다."}), 404
+    try:
+        df = get_daily_prices(ticker)
+        if df.empty:
+            return jsonify({"error": f"[{ticker}] 종목의 데이터가 DB에 없습니다."}), 404
+        real_data = df.to_dict(orient='records')
+        return jsonify(real_data)
+    except Exception as e:
+        return jsonify({"error": f"서버 내부 에러 발생: {str(e)}"}), 500
+
+@app.route('/api/user/<user_id>', methods=['GET'])
+def get_user_info(user_id):
+    try:
+        user_data = get_user(user_id)
+        if user_data:
+            result = {
+                "user_id": user_data,
+                "username": user_data,
+                "investment_type": user_data
+            }
+            return jsonify(result)
+        else:
+            return jsonify({"error": "해당 사용자를 찾을 수 없습니다."}), 404
+            
+    except Exception as e:
+        return jsonify({"error": f"서버 내부 에러 발생: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    # 서버 가동
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)
