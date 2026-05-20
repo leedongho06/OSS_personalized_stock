@@ -11,6 +11,7 @@ from news.classifier import add_sector_to_news
 from news.random_picker import pick_random_news
 from news.interest_scorer import calculate_interest
 from news.style_inferrer import infer_style_from_news
+from news.db_manager import init_news_table, save_news, load_news, get_news_count
 
 
 def get_input_method() -> str:
@@ -38,11 +39,18 @@ def main():
 
     else:
         # 뉴스 관심도 평가
+        init_news_table()
         print("\n뉴스 데이터 수집 중...")
-        news = fetch_all_news()
-        news = add_sector_to_news(news)
-        
-        # [수정 완료] pick_balanced_news -> pick_random_news로 이름 통일
+
+        if get_news_count() < 30:
+            print("API에서 뉴스 수집 중...")
+            news = fetch_all_news()
+            news = add_sector_to_news(news)
+            save_news(news)
+        else:
+            print("DB에서 뉴스 로드 중...")
+            news = load_news(limit=100)
+
         picked = pick_random_news(news, n=5)
 
         print("\n[ 뉴스 관심도 평가 ]")
@@ -71,8 +79,8 @@ def main():
     # 3. 필터링
     filtered = filter_by_style(df, style)
     if filtered.empty:
-        print("조건에 맞는 종목이 없습니다.")
-        return
+        print("조건에 맞는 종목이 없어 전체 종목에서 추천합니다.")
+        filtered = df
 
     # 4. 코사인 유사도 추천
     result = recommend(filtered, style, top_n=5)

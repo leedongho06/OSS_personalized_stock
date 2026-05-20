@@ -1,5 +1,6 @@
 import os
 import requests
+import time
 
 CLIENT_ID = os.environ.get("NAVER_CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("NAVER_CLIENT_SECRET", "")
@@ -45,9 +46,19 @@ def fetch_news(query: str, display: int = 5) -> list:
     return response.json().get("items", [])
 
 
-def fetch_all_news(display_per_query: int = 3) -> list:
+def fetch_all_news(display_per_query: int = 10) -> list:
     all_news = []
     for query in SEARCH_QUERIES:
         news = fetch_news(query, display=display_per_query)
-        all_news.extend(news)
+        if news:  # 성공한 것만 추가
+            all_news.extend(news)
+        if len(all_news) >= 50:  # 50개 모이면 중단
+            break
+        time.sleep(0.5)  # 0.5초로 줄이기
+
+    # API 실패시 더미 뉴스로 대체
+    if not all_news:
+        print("API 제한 - 더미 뉴스로 대체합니다.")
+        all_news = fetch_dummy_news()
+
     return all_news
