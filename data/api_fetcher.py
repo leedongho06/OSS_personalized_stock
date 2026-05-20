@@ -1,3 +1,4 @@
+
 import FinanceDataReader as fdr
 import pandas as pd
 from datetime import datetime, timedelta
@@ -12,7 +13,7 @@ from database.db_manager import save_daily_data
 from data.preprocessor import preprocess_stock_data
 from data.validator import validate_stock_data
 
-# 성현님이 지정한 섹터별 핵심 기업 종목코드 (절대 실패하지 않는 고정 맵)
+# 성현님이 지정한 섹터별 핵심 기업 종목코드
 TICKER_MAP = {
     "삼성전자": "005930", "SK하이닉스": "000660",
     "카카오": "035720", "NAVER": "035420",
@@ -25,18 +26,31 @@ TICKER_MAP = {
     "롯데쇼핑": "023530", "이마트": "139480"
 }
 
+def fetch_stock_data(ticker, days=30):
+    """
+    [테스트 및 개별 수집용 함수]
+    지정한 종목의 최근 N일치 원시 데이터를 FDR을 통해 수집하여 반환합니다.
+    """
+    end_date = datetime.now().strftime('%Y-%m-%d')
+    start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+    
+    try:
+        df = fdr.DataReader(ticker, start_date, end_date)
+        return df
+    except Exception as e:
+        print(f"   [API 에러] {ticker} 수집 실패: {e}")
+        return pd.DataFrame()
+
+
 def run_fdr_pipeline():
     print(f"--- 총 {len(TICKER_MAP)}개 우량 기업 데이터 수집 시작 (서버 차단 면역 모드) ---")
     
-    end_date = datetime.now().strftime('%Y-%m-%d')
-    start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
-
     for name, code in TICKER_MAP.items():
         print(f"\n>>> [{name} ({code})] 수집 중...")
         
         try:
-            # 1. 수집
-            df = fdr.DataReader(code, start_date, end_date)
+            # 1. 분리한 수집 함수 호출 (중복 제거)
+            df = fetch_stock_data(code, days=30)
             
             if df.empty:
                 print(f"   [실패] 데이터 없음")
@@ -62,4 +76,8 @@ def run_fdr_pipeline():
     print("\n--- 모든 섹터 종목 데이터 수집 및 DB 저장 완료! ---")
 
 if __name__ == "__main__":
-    run_fdr_pipeline()
+    # 이전에 설정한 가이드라인 안내 문구 유지
+    print("\n" + "="*60)
+    print("[Notice] 전체 데이터 수집 및 부분 최신화 파이프라인 가동은")
+    print("         'python3 data/updater.py'를 실행하는 것을 권장합니다.")
+    print("="*60 + "\n")
