@@ -1,4 +1,3 @@
-
 import pandas as pd
 import sqlite3  # DB 로드를 위해 추가
 import os
@@ -101,9 +100,10 @@ def main():
     if os.path.exists(DB_PATH):
         try:
             conn = sqlite3.connect(DB_PATH)
-            # 성현님의 실제 테이블인 daily_prices에서 주가 정보 추출
+            
+            # per, pbr 컬럼 호출 보장
             query = """
-                SELECT ticker, open, high, low, close, volume, date
+                SELECT ticker, open, high, low, close, volume, per, pbr, date
                 FROM daily_prices
             """
             db_df = pd.read_sql_query(query, conn)
@@ -122,6 +122,12 @@ def main():
                 
                 # 판다스 merge를 통해 동호님 알고리즘이 원하는 규격으로 결합
                 df = pd.merge(db_df, meta_info, on='ticker', how='inner')
+                
+                # 🔥 [수정 완료] 동호님 알고리즘에서 요구하는 ma_20(20일 이동평균선) 동적 생성 레이어 추가
+                # 날짜 순으로 정렬한 뒤 종목(ticker)별로 그룹화하여 20일 종가 평균 계산
+                df = df.sort_values(by=['ticker', 'date']).reset_index(drop=True)
+                df['ma_20'] = df.groupby('ticker')['close'].transform(lambda x: x.rolling(window=20, min_periods=1).mean())
+                
                 print(f"✅ DB 로드 및 결합 완료: 총 {len(df)}건의 주가 데이터를 기반으로 추천을 시작합니다.")
                 db_loaded = True
             else:
@@ -140,11 +146,14 @@ def main():
 
     # 3. 필터링 (FDR 및 Preprocessor를 거쳐 소문자가 된 컬럼 및 6자리 Ticker 사용)
     filtered = filter_by_style(df, style)
+
+    if not filtered.empty and 'date' in filtered.columns:
+        filtered = filtered.sort_values('date').groupby('ticker').last().reset_index()
+
     if filtered.empty:
         print("조건에 맞는 종목이 없어 전체 종목에서 추천합니다.")
-        # DB 로드에 성공했고 date 컬럼이 살아있는 경우에만 최신일 데이터 추출 정렬 진행
         if db_loaded and 'date' in df.columns:
-            df_latest = df.sort_values('date').groupby('ticker').last().reset_index() 
+            df_latest = df.sort_values('date').groupby('ticker').last().reset_index()
             filtered = df_latest
         else:
             filtered = df
