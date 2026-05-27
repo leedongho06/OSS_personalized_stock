@@ -27,6 +27,40 @@ SEARCH_QUERIES = [
     "반도체 주식", "바이오 주식", "금융 주식", "자동차 주식", "IT 주식",
 ]
 
+# [추가됨] 누락되었던 가짜 뉴스 제공 함수 (테스트용)
+def fetch_dummy_news() -> list:
+    return [
+        {
+            "title": "삼성전자, 새로운 <b>AI</b> 반도체 혁신 발표",
+            "description": "최신 인공지능 기술이 탑재된 칩을 다음 달 공개합니다.",
+            "link": "#",
+            "pubDate": "2026-05-27"
+        },
+        {
+            "title": "전국 철도 <b>노조 파업</b> 돌입, 교통 마비 우려",
+            "description": "임금 인상을 요구하며 무기한 파업과 시위 투쟁에 나섰습니다.",
+            "link": "#",
+            "pubDate": "2026-05-27"
+        },
+        {
+            "title": "현대차, 글로벌 시장에서 전기차 판매량 1위 달성",
+            "description": "글로벌 자동차 산업의 새로운 역사를 쓰고 있습니다.",
+            "link": "#",
+            "pubDate": "2026-05-26"
+        },
+        {
+            "title": "모 은행 대규모 <b>횡령</b> 사태 발생, 당국 수사 착수",
+            "description": "직원 배임 및 횡령 의혹으로 금융권에 큰 충격을 주고 있습니다.",
+            "link": "#",
+            "pubDate": "2026-05-26"
+        },
+        {
+            "title": "네이버, 신규 플랫폼 서비스로 시장 공략",
+            "description": "커뮤니케이션과 쇼핑을 결합한 새로운 플랫폼을 런칭합니다.",
+            "link": "#",
+            "pubDate": "2026-05-25"
+        }
+    ]
 
 def fetch_news(query: str, display: int = 5) -> list:
     url = "https://openapi.naver.com/v1/search/news.json"
@@ -44,7 +78,6 @@ def fetch_news(query: str, display: int = 5) -> list:
         print(f"API 오류: {response.status_code}")
         return []
     return response.json().get("items", [])
-
 
 def fetch_all_news(display_per_query: int = 10) -> list:
     all_news = []
