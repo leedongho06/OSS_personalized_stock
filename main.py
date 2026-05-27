@@ -20,7 +20,7 @@ from news.db_manager import init_news_table, save_news, load_news, get_news_coun
 # ★ feature_datacollector 브랜치에서 완성한 updater 엔진 임포트
 from data.updater import run_daily_updater
 
-# [수정] 실행 위치에 영향받지 않도록 절대 경로 설정 (data/stock_data.db)
+# 실행 위치에 영향받지 않도록 절대 경로 설정 (data/stock_data.db)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data", "stock_data.db")
 
@@ -40,7 +40,7 @@ def main():
     print("\n=== OSS Personalized Stock ===\n")
 
     # ==========================================
-    # 0. [성현 기능 통합] 데이터 자동 부분 최신화 가동
+    # 0. 데이터 자동 부분 최신화 가동
     # ==========================================
     # 프로그램이 켜지자마자 DB 날짜를 체크하고 누락된 주가 데이터를 FDR로 채워 넣습니다.
     run_daily_updater()
@@ -91,7 +91,7 @@ def main():
         print(f"\n추론된 투자 성향: {style} (점수: {score})\n")
 
     # ==========================================
-    # 2. [성현 기능 통합] 정적 CSV 대신 최신화된 DB 데이터 로드 (구조 맞춤형 수정)
+    # 2. 정적 CSV 대신 최신화된 DB 데이터 로드 (구조 맞춤형 수정)
     # ==========================================
     print("\n[Data] 추천 알고리즘을 위한 최신 주가 데이터 로드 중...")
     
@@ -123,8 +123,7 @@ def main():
                 # 판다스 merge를 통해 동호님 알고리즘이 원하는 규격으로 결합
                 df = pd.merge(db_df, meta_info, on='ticker', how='inner')
                 
-                # 🔥 [수정 완료] 동호님 알고리즘에서 요구하는 ma_20(20일 이동평균선) 동적 생성 레이어 추가
-                # 날짜 순으로 정렬한 뒤 종목(ticker)별로 그룹화하여 20일 종가 평균 계산
+                # 동호님 알고리즘에서 요구하는 ma_20(20일 이동평균선) 동적 생성
                 df = df.sort_values(by=['ticker', 'date']).reset_index(drop=True)
                 df['ma_20'] = df.groupby('ticker')['close'].transform(lambda x: x.rolling(window=20, min_periods=1).mean())
                 
@@ -144,16 +143,17 @@ def main():
         print("⚠️ DB 파일이 존재하지 않아 기본 CSV 데이터를 사용합니다.")
         df = pd.read_csv(os.path.join(BASE_DIR, "data", "stocks.csv"))
 
-    # 3. 필터링 (FDR 및 Preprocessor를 거쳐 소문자가 된 컬럼 및 6자리 Ticker 사용)
+    # 3. 필터링 및 중복 시계열 압축 (최신 날짜 1건만 남기기)
     filtered = filter_by_style(df, style)
-
+    
+    # 중복 추천을 방지하기 위해 종목별로 가장 최신 날짜 데이터만 남김
     if not filtered.empty and 'date' in filtered.columns:
         filtered = filtered.sort_values('date').groupby('ticker').last().reset_index()
-
+        
     if filtered.empty:
         print("조건에 맞는 종목이 없어 전체 종목에서 추천합니다.")
         if db_loaded and 'date' in df.columns:
-            df_latest = df.sort_values('date').groupby('ticker').last().reset_index()
+            df_latest = df.sort_values('date').groupby('ticker').last().reset_index() 
             filtered = df_latest
         else:
             filtered = df
@@ -171,7 +171,7 @@ def main():
     print(f"\nQ-learning 추천 인덱스: {action}")
     print(f"최종 추천 종목: {result.iloc[action % len(result)]['name']}\n")
 
-    # 6. 피드백 받아 Q-learning 학습
+    # 6. 피드백 받아 Q-learning 학습 및 자동 저장
     train_with_feedback(style, sector)
 
 
