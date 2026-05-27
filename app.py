@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import pandas as pd
-import requests as req
 from recommendation.scorer import infer_style
 from recommendation.filter import filter_by_style
 from recommendation.recommender import recommend
@@ -14,24 +13,23 @@ from news.classifier import add_sector_to_news
 from news.random_picker import pick_random_news
 from news.interest_scorer import calculate_interest
 from news.style_inferrer import infer_style_from_news
-from news.db_manager import init_news_table, save_news, load_news, get_news_count
-from news.db_manager import init_news_table, save_news, load_news, \
-    get_news_count, init_trade_table, save_trade, load_trades
+from news.db_manager import init_news_table, save_news, load_news, get_news_count, init_trade_table, save_trade, load_trades
 
 app = Flask(__name__)
 app.secret_key = "oss_stock_secret"
-BACKEND_URL = "http://localhost:8080"
 
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.route("/portfolio")
 def portfolio():
     style = session.get("style", None)
     history = session.get("history", [])
     return render_template("portfolio.html", style=style, history=history)
+
 
 @app.route("/recommend", methods=["POST"])
 def recommend_by_company():
@@ -40,7 +38,6 @@ def recommend_by_company():
 
     style, score, analyses = infer_style(companies)
     session["style"] = style
-    session["sector"] = "IT"
 
     df = pd.read_csv("data/stocks.csv")
     filtered = filter_by_style(df, style)
@@ -55,6 +52,7 @@ def recommend_by_company():
     state = encode_state(style, sector)
     action = choose_action(q_table, state)
     final = result.iloc[action % len(result)]["name"]
+    session["final"] = final
 
     return render_template(
         "result.html",
@@ -104,49 +102,7 @@ def rate_news():
     state = encode_state(style, sector)
     action = choose_action(q_table, state)
     final = result.iloc[action % len(result)]["name"]
-
-    return render_template(
-        "result.html",
-        style=style,
-        result=result.to_dict(orient="records"),
-        final=final,
-    )
-
-
-@app.route("/feedback", methods=["POST"])
-def feedback():
-    score = int(request.form.get("score", 3))
-    style = session.get("style", "중립형")
-    sector = session.get("sector", "IT")
-    reward = normalize_reward(score)
-    train(style, sector, reward)
-    return redirect(url_for("index"))
-
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
-
-@app.route("/recommend", methods=["POST"])
-def recommend_by_company():
-    companies = request.form.getlist("companies")
-    companies = [c for c in companies if c.strip()]
-
-    style, score, analyses = infer_style(companies)
-    session["style"] = style
-
-    df = pd.read_csv("data/stocks.csv")
-    filtered = filter_by_style(df, style)
-    if filtered.empty:
-        filtered = df
-
-    result = recommend(filtered, style, top_n=5)
-    sector = result.iloc[0]["sector"]
-    session["sector"] = sector
-
-    q_table = load_q_table()
-    state = encode_state(style, sector)
-    action = choose_action(q_table, state)
-    final = result.iloc[action % len(result)]["name"]
+    session["final"] = final
 
     return render_template(
         "result.html",
@@ -164,7 +120,6 @@ def feedback():
     reward = normalize_reward(score)
     train(style, sector, reward)
 
-    # 피드백 이력 저장
     history = session.get("history", [])
     history.append({
         "name": session.get("final", ""),
@@ -174,6 +129,7 @@ def feedback():
     session["history"] = history
 
     return redirect(url_for("portfolio"))
+
 
 @app.route("/journal")
 def journal():
@@ -190,3 +146,7 @@ def add_trade():
     rating = int(request.form.get("rating", 3))
     save_trade(name, buy_price, sell_price, rating)
     return redirect(url_for("journal"))
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
