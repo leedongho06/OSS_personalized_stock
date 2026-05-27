@@ -25,6 +25,11 @@ BACKEND_URL = "http://localhost:8080"
 def index():
     return render_template("index.html")
 
+@app.route("/portfolio")
+def portfolio():
+    style = session.get("style", None)
+    history = session.get("history", [])
+    return render_template("portfolio.html", style=style, history=history)
 
 @app.route("/recommend", methods=["POST"])
 def recommend_by_company():
@@ -118,3 +123,52 @@ def feedback():
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+
+@app.route("/recommend", methods=["POST"])
+def recommend_by_company():
+    companies = request.form.getlist("companies")
+    companies = [c for c in companies if c.strip()]
+
+    style, score, analyses = infer_style(companies)
+    session["style"] = style
+
+    df = pd.read_csv("data/stocks.csv")
+    filtered = filter_by_style(df, style)
+    if filtered.empty:
+        filtered = df
+
+    result = recommend(filtered, style, top_n=5)
+    sector = result.iloc[0]["sector"]
+    session["sector"] = sector
+
+    q_table = load_q_table()
+    state = encode_state(style, sector)
+    action = choose_action(q_table, state)
+    final = result.iloc[action % len(result)]["name"]
+
+    return render_template(
+        "result.html",
+        style=style,
+        result=result.to_dict(orient="records"),
+        final=final,
+    )
+
+
+@app.route("/feedback", methods=["POST"])
+def feedback():
+    score = int(request.form.get("score", 3))
+    style = session.get("style", "중립형")
+    sector = session.get("sector", "IT")
+    reward = normalize_reward(score)
+    train(style, sector, reward)
+
+    # 피드백 이력 저장
+    history = session.get("history", [])
+    history.append({
+        "name": session.get("final", ""),
+        "sector": sector,
+        "score": score,
+    })
+    session["history"] = history
+
+    return redirect(url_for("portfolio"))
