@@ -90,3 +90,67 @@ def get_news_count() -> int:
         count = 0
     conn.close()
     return count
+
+# 매매일지 테이블 생성
+def init_trade_table():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS trade_journal (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            buy_price REAL,
+            sell_price REAL,
+            profit_rate REAL,
+            rating INTEGER,
+            created_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def save_trade(name: str, buy_price: float,
+               sell_price: float, rating: int):
+    """매매일지 저장 및 수익률 자동 계산."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    profit_rate = round(
+        ((sell_price - buy_price) / buy_price) * 100, 2
+    ) if buy_price > 0 else 0.0
+
+    cursor.execute("""
+        INSERT INTO trade_journal
+        (name, buy_price, sell_price, profit_rate, rating, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (name, buy_price, sell_price, profit_rate, rating, now))
+
+    conn.commit()
+    conn.close()
+
+
+def load_trades() -> list:
+    """매매일지 전체 조회."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT name, buy_price, sell_price, profit_rate, rating, created_at
+        FROM trade_journal
+        ORDER BY created_at DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "name": row[0],
+            "buy_price": row[1],
+            "sell_price": row[2],
+            "profit_rate": row[3],
+            "rating": row[4],
+            "created_at": row[5],
+        }
+        for row in rows
+    ]
