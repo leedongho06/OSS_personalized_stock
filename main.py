@@ -1,3 +1,4 @@
+
 import pandas as pd
 import sqlite3  # DB 로드를 위해 추가
 import os
@@ -20,7 +21,10 @@ from news.db_manager import init_news_table, save_news, load_news, get_news_coun
 # ★ feature_datacollector 브랜치에서 완성한 updater 엔진 임포트
 from data.updater import run_daily_updater
 
-DB_PATH = "database/stock_data.db"  # 성현님 파이프라인의 DB 경로
+# [수정] 실행 위치에 영향받지 않도록 절대 경로 설정 (data/stock_data.db)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "data", "stock_data.db")
+
 
 def get_input_method() -> str:
     print("\n[ 투자 성향 파악 방법 선택 ]")
@@ -88,35 +92,62 @@ def main():
         print(f"\n추론된 투자 성향: {style} (점수: {score})\n")
 
     # ==========================================
-    # 2. [성현 기능 통합] 정적 CSV 대신 최신화된 DB 데이터 로드
+    # 2. [성현 기능 통합] 정적 CSV 대신 최신화된 DB 데이터 로드 (구조 맞춤형 수정)
     # ==========================================
     print("\n[Data] 추천 알고리즘을 위한 최신 주가 데이터 로드 중...")
+    
+    db_loaded = False  # DB 데이터 정상 로드 여부 플래그
+
     if os.path.exists(DB_PATH):
         try:
             conn = sqlite3.connect(DB_PATH)
-            # 동호님의 추천 알고리즘이 처리할 수 있도록 
-            # daily_data와 stocks 테이블을 JOIN하여 하나의 데이터프레임으로 결합합니다.
+            # 성현님의 실제 테이블인 daily_prices에서 주가 정보 추출
             query = """
-                SELECT d.ticker, s.name, s.sector, d.open, d.high, d.low, d.close, d.volume, d.date
-                FROM daily_data d
-                JOIN stocks s ON d.ticker = s.ticker
+                SELECT ticker, open, high, low, close, volume, date
+                FROM daily_prices
             """
-            df = pd.read_sql_query(query, conn)
+            db_df = pd.read_sql_query(query, conn)
             conn.close()
-            print(f"✅ DB 로드 완료: 총 {len(df)}건의 주가 데이터를 기반으로 추천을 시작합니다.")
+            
+            # 추천에 필요한 기업명(name)과 섹터(sector)는 기본 stocks.csv에서 로드
+            csv_stocks = pd.read_csv(os.path.join(BASE_DIR, "data", "stocks.csv"))
+            
+            if 'name' in csv_stocks.columns and 'sector' in csv_stocks.columns:
+                # 메타 정보 추출 및 중복 제거
+                meta_info = csv_stocks[['ticker', 'name', 'sector']].drop_duplicates()
+                
+                # 조인을 위해 ticker 타입을 6자리 문자열로 매칭 통일
+                db_df['ticker'] = db_df['ticker'].astype(str).str.zfill(6)
+                meta_info['ticker'] = meta_info['ticker'].astype(str).str.zfill(6)
+                
+                # 판다스 merge를 통해 동호님 알고리즘이 원하는 규격으로 결합
+                df = pd.merge(db_df, meta_info, on='ticker', how='inner')
+                print(f"✅ DB 로드 및 결합 완료: 총 {len(df)}건의 주가 데이터를 기반으로 추천을 시작합니다.")
+                db_loaded = True
+            else:
+                print("⚠️ CSV 파일에 name 또는 sector 컬럼이 없어 기존 CSV 데이터로 대체합니다.")
+                df = csv_stocks
+
         except Exception as e:
-            print(f"❌ DB 로드 실패 ({e}): 안전지책으로 기존 CSV 데이터를 사용합니다.")
-            df = pd.read_csv("data/stocks.csv")
+            import traceback
+            print(f"❌ DB 로드 실패 구체적 원인:")
+            traceback.print_exc()
+            print("안전지책으로 기존 CSV 데이터를 사용합니다.")
+            df = pd.read_csv(os.path.join(BASE_DIR, "data", "stocks.csv"))
     else:
         print("⚠️ DB 파일이 존재하지 않아 기본 CSV 데이터를 사용합니다.")
-        df = pd.read_csv("data/stocks.csv")
+        df = pd.read_csv(os.path.join(BASE_DIR, "data", "stocks.csv"))
 
     # 3. 필터링 (FDR 및 Preprocessor를 거쳐 소문자가 된 컬럼 및 6자리 Ticker 사용)
     filtered = filter_by_style(df, style)
     if filtered.empty:
         print("조건에 맞는 종목이 없어 전체 종목에서 추천합니다.")
-        df_latest = df.sort_values('date').groupby('ticker').last().reset_index() # 각 종목의 최신 영업일 데이터만 추출
-        filtered = df_latest
+        # DB 로드에 성공했고 date 컬럼이 살아있는 경우에만 최신일 데이터 추출 정렬 진행
+        if db_loaded and 'date' in df.columns:
+            df_latest = df.sort_values('date').groupby('ticker').last().reset_index() 
+            filtered = df_latest
+        else:
+            filtered = df
 
     # 4. 코사인 유사도 추천
     result = recommend(filtered, style, top_n=5)
