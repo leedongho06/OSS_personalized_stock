@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뉴스 관심도 평가</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📰 뉴스 관심도 평가</h1>
+            <p>각 뉴스에 별점을 매겨주세요 (1~5점)</p>
+        </header>
+
+        <form action="/news/rate" method="POST">
+            {% for i in range(news|length) %}
+            <div class="card news-card">
+                <span class="sector-badge">{{ news[i].sector }}</span>
+                <h3>{{ news[i].title }}</h3>
+                <p>{{ news[i].description }}</p>
+                <div class="star-rating">
+                    {% for star in [5,4,3,2,1] %}
+                    <input type="radio" name="rating_{{ i }}"
+                           id="s{{ i }}_{{ star }}"
+                           value="{{ star }}" required>
+                    <label for="s{{ i }}_{{ star }}">★</label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">
+                분석 결과 보기
+            </button>
+        </form>
+    </div>
+</body>
+</html>
