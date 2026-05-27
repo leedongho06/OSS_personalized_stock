@@ -181,3 +181,6 @@ header p { color: #718096; }
     .card-grid { grid-template-columns: 1fr; }
     header h1 { font-size: 1.5rem; }
 }
+
+.profit { color: #e53e3e; font-weight: 600; }
+.loss   { color: #3182ce; font-weight: 600; }
