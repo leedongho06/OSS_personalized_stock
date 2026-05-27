@@ -4,12 +4,23 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity
 from recommendation.profile import get_feature_cols, get_ideal
 
-def build_feature_matrix(df:pd.DataFrame):
-	cols = get_feature_cols()
-	feature_df= df[cols].fillna(df[cols].median())
-	scaler = MinMaxScaler()
-	matrix = scaler.fit_transform(feature_df)
-	return matrix, scaler
+def build_feature_matrix(df: pd.DataFrame):
+    cols = get_feature_cols()
+    feature_df = df[cols].copy()
+
+    # 숫자형으로 변환
+    for col in cols:
+        feature_df[col] = pd.to_numeric(feature_df[col], errors="coerce")
+
+    # 결측값 처리
+    feature_df = feature_df.fillna(feature_df.median())
+
+    # 그래도 NaN 있으면 0으로
+    feature_df = feature_df.fillna(0)
+
+    scaler = MinMaxScaler()
+    matrix = scaler.fit_transform(feature_df)
+    return matrix, scaler
 
 def get_ideal_vector(style: str, scaler: MinMaxScaler) -> np.ndarray:
 	cols = get_feature_cols()
