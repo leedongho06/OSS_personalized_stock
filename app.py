@@ -15,6 +15,8 @@ from news.random_picker import pick_random_news
 from news.interest_scorer import calculate_interest
 from news.style_inferrer import infer_style_from_news
 from news.db_manager import init_news_table, save_news, load_news, get_news_count
+from news.db_manager import init_news_table, save_news, load_news, \
+    get_news_count, init_trade_table, save_trade, load_trades
 
 app = Flask(__name__)
 app.secret_key = "oss_stock_secret"
@@ -172,3 +174,19 @@ def feedback():
     session["history"] = history
 
     return redirect(url_for("portfolio"))
+
+@app.route("/journal")
+def journal():
+    init_trade_table()
+    trades = load_trades()
+    return render_template("journal.html", trades=trades)
+
+
+@app.route("/journal/add", methods=["POST"])
+def add_trade():
+    name = request.form.get("name", "")
+    buy_price = float(request.form.get("buy_price", 0))
+    sell_price = float(request.form.get("sell_price", 0))
+    rating = int(request.form.get("rating", 3))
+    save_trade(name, buy_price, sell_price, rating)
+    return redirect(url_for("journal"))
