@@ -1,4 +1,4 @@
-def normaalize_reward(score: int) -> float:
+def normalize_reward(score: int) -> float:
     """"
     사용자 피드백 1-5점을 보상 신호로 변환
     5 -> 1.0 / 3->0.0
