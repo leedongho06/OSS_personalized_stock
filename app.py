@@ -144,7 +144,25 @@ def add_trade():
     buy_price = float(request.form.get("buy_price", 0))
     sell_price = float(request.form.get("sell_price", 0))
     rating = int(request.form.get("rating", 3))
+
+    # DB 저장
     save_trade(name, buy_price, sell_price, rating)
+
+    # Q-learning 학습 반영
+    style = session.get("style", "중립형")
+    sector = session.get("sector", "IT")
+    reward = normalize_reward(rating)
+    train(style, sector, reward)
+
+    # 포트폴리오 이력 업데이트
+    history = session.get("history", [])
+    history.append({
+        "name": name,
+        "sector": sector,
+        "score": rating,
+    })
+    session["history"] = history
+
     return redirect(url_for("journal"))
 
 
