@@ -3,156 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSS Personalized Stock</title>
+    <title>맞춤형 주식 추천 시스템</title>
+    <!-- 분리한 CSS 파일 불러오기 -->
     <link rel="stylesheet" href="/static/css/style.css">
-    <style>
-        /* ── Tag Input Component ─────────────────────── */
-        .tag-field {
-            min-height: 48px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 7px 10px;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 6px;
-            cursor: text;
-            background: #fff;
-            transition: border-color .2s, box-shadow .2s;
-            margin-bottom: 6px;
-        }
-        .tag-field:focus-within {
-            border-color: #4299e1;
-            box-shadow: 0 0 0 3px rgba(66,153,225,.12);
-        }
-        .tag-field.is-max {
-            background: #f7fafc;
-            cursor: default;
-        }
-
-        /* 태그 pill */
-        .tag-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            background: #ebf8ff;
-            color: #2b6cb0;
-            border: 1px solid #bee3f8;
-            border-radius: 20px;
-            padding: 3px 6px 3px 10px;
-            font-size: .82rem;
-            font-weight: 600;
-            white-space: nowrap;
-            animation: pillIn .14s cubic-bezier(.34,1.56,.64,1) both;
-        }
-        @keyframes pillIn {
-            from { transform: scale(.6); opacity: 0; }
-            to   { transform: scale(1);  opacity: 1; }
-        }
-        .tag-pill.dup {
-            animation: pillShake .32s ease both;
-            border-color: #f6ad55;
-            background: #fffaf0;
-            color: #c05621;
-        }
-        @keyframes pillShake {
-            0%,100% { transform: translateX(0); }
-            20%     { transform: translateX(-5px); }
-            40%     { transform: translateX(5px); }
-            60%     { transform: translateX(-3px); }
-            80%     { transform: translateX(3px); }
-        }
-
-        /* X 버튼 */
-        .tag-x {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            color: #63b3ed;
-            font-size: .7rem;
-            line-height: 1;
-            padding: 0;
-            transition: background .15s, color .15s;
-            flex-shrink: 0;
-        }
-        .tag-x:hover {
-            background: #bee3f8;
-            color: #2b6cb0;
-        }
-
-        /* 인라인 텍스트 입력 */
-        .tag-text {
-            flex: 1;
-            min-width: 110px;
-            border: none;
-            outline: none;
-            background: transparent;
-            font-size: .92rem;
-            font-family: inherit;
-            color: #2d3748;
-            padding: 2px 0;
-            caret-color: #4299e1;
-        }
-        .tag-text::placeholder { color: #c5cbd5; }
-        .tag-text:disabled { cursor: not-allowed; }
-
-        /* 힌트 줄 */
-        .tag-meta {
-            display: flex;
-            align-items: center;
-            font-size: .75rem;
-            color: #b0bec5;
-            margin-bottom: .8rem;
-            gap: 4px;
-        }
-        .tag-meta kbd {
-            font-family: inherit;
-            background: #edf2f7;
-            color: #718096;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            padding: 1px 5px;
-            font-size: .7rem;
-        }
-        .tag-meta .spacer { flex: 1; }
-        .tag-count {
-            font-size: .75rem;
-            font-weight: 600;
-            color: #90cdf4;
-            transition: color .2s;
-        }
-        .tag-count.warn { color: #e53e3e; }
-        .tag-reset {
-            font-size: .75rem;
-            color: #b0bec5;
-            text-decoration: underline;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            transition: color .15s;
-        }
-        .tag-reset:hover { color: #718096; }
-
-        /* 제출 버튼 비활성 */
-        .btn-primary:disabled {
-            background: #bee3f8;
-            cursor: not-allowed;
-            opacity: .7;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📈 OSS Personalized Stock</h1>
-            <p>나만의 투자 성향에 맞는 종목을 추천해드립니다</p>
+            <h1>맞춤형 주식 추천 시스템</h1>
+            <p>당신의 투자 성향에 딱 맞는 종목을 찾아드립니다.</p>
         </header>
 
         <div class="card-grid">
@@ -176,7 +35,7 @@
 
                     <!-- 힌트 & 카운터 -->
                     <div class="tag-meta">
-                        <kbd>Enter</kbd>&nbsp;또는&nbsp;<kbd>,</kbd>&nbsp;로 추가&nbsp;·&nbsp;<kbd>←</kbd>&nbsp;로 삭제
+                        <kbd>Enter</kbd> 또는 <kbd>,</kbd> 로 추가 · <kbd>←</kbd> 로 삭제
                         <span class="spacer"></span>
                         <button type="button" id="reset-btn" class="tag-reset" style="display:none" onclick="clearTags()">
                             전체 삭제
@@ -221,9 +80,7 @@
             tags.forEach((name, i) => {
                 const pill = document.createElement('span');
                 pill.className = 'tag-pill';
-                pill.innerHTML =
-                    `<span>${esc(name)}</span>` +
-                    `<button type="button" class="tag-x" data-i="${i}" aria-label="${esc(name)} 삭제">✕</button>`;
+                pill.innerHTML = `<span>${esc(name)}</span><button type="button" class="tag-x" data-i="${i}" aria-label="${esc(name)} 삭제">✕</button>`;
                 field.insertBefore(pill, textInput);
             });
 
@@ -360,4 +217,3 @@
     })();
     </script>
 </body>
-</html>

@@ -1,183 +1,218 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSS Personalized Stock</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 OSS Personalized Stock</h1>
+            <p>나만의 투자 성향에 맞는 종목을 추천해드립니다</p>
+        </header>
 
-body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #f0f4f8;
-    color: #2d3748;
-}
+        <div class="card-grid">
+            <div class="card">
+                <h2>🏢 관심 기업 입력</h2>
+                <p>관심 있는 기업을 입력하면<br>투자 성향을 분석해드립니다</p>
 
-.container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 2rem;
-}
+                <form id="rec-form" action="/recommend" method="POST">
+                    <div id="tag-field" class="tag-field" onclick="handleFieldClick(event)">
+                        <input
+                            id="tag-text"
+                            class="tag-text"
+                            type="text"
+                            placeholder="예: 삼성전자, 카카오, 현대차…"
+                            maxlength="30"
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+                    </div>
 
-header {
-    text-align: center;
-    margin-bottom: 2rem;
-    padding: 2rem;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
+                    <div class="tag-meta">
+                        <kbd>Enter</kbd>&nbsp;또는&nbsp;<kbd>,</kbd>&nbsp;로 추가&nbsp;·&nbsp;<kbd>←</kbd>&nbsp;로 삭제
+                        <span class="spacer"></span>
+                        <button type="button" id="reset-btn" class="tag-reset" style="display:none" onclick="clearTags()">
+                            전체 삭제
+                        </button>
+                        <span id="tag-count" class="tag-count" style="display:none"></span>
+                    </div>
 
-header h1 {
-    font-size: 2rem;
-    color: #2b6cb0;
-    margin-bottom: 0.5rem;
-}
+                    <button type="submit" id="submit-btn" class="btn btn-primary" disabled>
+                        종목 추천받기
+                    </button>
+                </form>
+            </div>
 
-header p { color: #718096; }
+            <div class="card">
+                <h2>📰 뉴스 관심도 평가</h2>
+                <p>최신 뉴스에 별점을 매겨<br>투자 성향을 파악합니다</p>
+                <a href="/news" class="btn btn-secondary">
+                    뉴스 평가 시작하기
+                </a>
+            </div>
+        </div>
+    </div>
 
-.card-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-}
+    <script>
+    (() => {
+        const MAX = 10;
+        let tags = [];
 
-.card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    margin-bottom: 1.5rem;
-}
+        const field     = document.getElementById('tag-field');
+        const textInput = document.getElementById('tag-text');
+        const countEl   = document.getElementById('tag-count');
+        const resetBtn  = document.getElementById('reset-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const form      = document.getElementById('rec-form');
 
-.card h2 {
-    font-size: 1.1rem;
-    margin-bottom: 0.75rem;
-    color: #2d3748;
-}
+        /* ── 렌더링 ──────────────────────────────────── */
+        function render() {
+            // 기존 태그 pill 제거
+            field.querySelectorAll('.tag-pill').forEach(el => el.remove());
 
-.card p {
-    color: #718096;
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
-    line-height: 1.6;
-}
+            // 태그 다시 그리기 (input 앞에 삽입)
+            tags.forEach((name, i) => {
+                const pill = document.createElement('span');
+                pill.className = 'tag-pill';
+                pill.innerHTML =
+                    `<span>${esc(name)}</span>` +
+                    `<button type="button" class="tag-x" data-i="${i}" aria-label="${esc(name)} 삭제">✕</button>`;
+                field.insertBefore(pill, textInput);
+            });
 
-.input-field {
-    width: 100%;
-    padding: 0.65rem 1rem;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border 0.2s;
-}
+            // 카운터 & 버튼 상태
+            const hasTag = tags.length > 0;
+            const atMax  = tags.length >= MAX;
 
-.input-field:focus { border-color: #4299e1; }
+            countEl.style.display  = hasTag ? '' : 'none';
+            countEl.textContent    = `${tags.length}/${MAX}`;
+            countEl.classList.toggle('warn', atMax);
 
-.btn {
-    display: block;
-    width: 100%;
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-align: center;
-    text-decoration: none;
-    transition: background 0.2s;
-    margin-top: 0.5rem;
-}
+            resetBtn.style.display = hasTag ? '' : 'none';
+            submitBtn.disabled     = !hasTag;
 
-.btn-primary { background: #3182ce; color: white; }
-.btn-primary:hover { background: #2b6cb0; }
-.btn-secondary { background: #e2e8f0; color: #2d3748; }
-.btn-secondary:hover { background: #cbd5e0; }
+            textInput.disabled    = atMax;
+            textInput.placeholder = tags.length === 0
+                ? '예: 삼성전자, 카카오, 현대차…'
+                : atMax ? '' : '추가 입력…';
 
-.sector-badge {
-    background: #ebf8ff;
-    color: #2b6cb0;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
+            field.classList.toggle('is-max', atMax);
 
-.style-badge {
-    background: #3182ce;
-    color: white;
-    padding: 6px 24px;
-    border-radius: 20px;
-    display: inline-block;
-    margin-top: 0.5rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-}
+            syncHidden();
+        }
 
-.final-stock {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #2b6cb0;
-    text-align: center;
-    padding: 1.5rem;
-}
+        /* ── 히든 input 동기화 (form POST) ──────────── */
+        function syncHidden() {
+            form.querySelectorAll('input[name="companies"]').forEach(el => el.remove());
+            tags.forEach(name => {
+                const h = document.createElement('input');
+                h.type  = 'hidden';
+                h.name  = 'companies';
+                h.value = name;
+                form.appendChild(h);
+            });
+        }
 
-.stock-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-}
+        /* ── 태그 추가 ───────────────────────────────── */
+        function addTag(raw) {
+            const value = raw.trim().replace(/,+$/, '').trim();
+            if (!value) return;
+            if (tags.length >= MAX) return;
 
-.stock-table th {
-    background: #ebf8ff;
-    padding: 0.75rem;
-    text-align: left;
-    font-size: 0.85rem;
-    color: #2b6cb0;
-}
+            // 중복 감지 → 기존 pill 흔들기
+            const idx = tags.findIndex(t => t === value);
+            if (idx !== -1) {
+                const pill = field.querySelectorAll('.tag-pill')[idx];
+                if (pill) {
+                    pill.classList.remove('dup');
+                    void pill.offsetWidth;          // reflow
+                    pill.classList.add('dup');
+                    setTimeout(() => pill.classList.remove('dup'), 350);
+                }
+                return;
+            }
 
-.stock-table td {
-    padding: 0.75rem;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 0.9rem;
-}
+            tags.push(value);
+            render();
+        }
 
-.stock-table tr:hover { background: #f7fafc; }
+        /* ── 태그 삭제 ───────────────────────────────── */
+        function removeTag(i) {
+            tags.splice(i, 1);
+            render();
+            if (!textInput.disabled) textInput.focus();
+        }
 
-.news-card { margin-bottom: 1.5rem; }
+        /* ── 전체 삭제 ───────────────────────────────── */
+        function clearTags() {
+            tags = [];
+            render();
+            textInput.focus();
+        }
+        window.clearTags = clearTags;
 
-.news-card h3 {
-    margin: 0.5rem 0;
-    font-size: 0.95rem;
-    line-height: 1.5;
-}
+        /* ── 쉼표 포함 붙여넣기 처리 ────────────────── */
+        function processCommaInput(raw) {
+            if (!raw.includes(',')) return false;
+            const parts = raw.split(',');
+            parts.forEach((part, i) => {
+                if (i < parts.length - 1) addTag(part);
+            });
+            textInput.value = parts[parts.length - 1].trimStart();
+            return true;
+        }
 
-.news-card p {
-    color: #718096;
-    font-size: 0.82rem;
-    margin-bottom: 0.75rem;
-}
+        /* ── 이벤트 ──────────────────────────────────── */
+        textInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                if (textInput.value.trim()) {
+                    addTag(textInput.value);
+                    textInput.value = '';
+                }
+            } else if (e.key === 'Backspace' && textInput.value === '' && tags.length > 0) {
+                removeTag(tags.length - 1);
+            }
+        });
 
-.star-rating {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    gap: 4px;
-    margin: 0.75rem 0;
-}
+        textInput.addEventListener('input', () => {
+            processCommaInput(textInput.value);
+        });
 
-.star-rating input { display: none; }
+        // pill X 버튼 클릭 (이벤트 위임)
+        field.addEventListener('click', e => {
+            const btn = e.target.closest('.tag-x');
+            if (btn) {
+                e.stopPropagation();
+                removeTag(Number(btn.dataset.i));
+            }
+        });
 
-.star-rating label {
-    font-size: 1.8rem;
-    cursor: pointer;
-    color: #cbd5e0;
-    transition: color 0.2s;
-}
+        // 영역 클릭 → input 포커스
+        function handleFieldClick(e) {
+            if (!e.target.closest('.tag-x') && !textInput.disabled) {
+                textInput.focus();
+            }
+        }
+        window.handleFieldClick = handleFieldClick;
 
-.star-rating input:checked ~ label,
-.star-rating label:hover,
-.star-rating label:hover ~ label {
-    color: #f6ad55;
-}
+        // 제출 전 검증
+        form.addEventListener('submit', e => {
+            if (tags.length === 0) { e.preventDefault(); textInput.focus(); }
+        });
 
-@media (max-width: 600px) {
-    .card-grid { grid-template-columns: 1fr; }
-    header h1 { font-size: 1.5rem; }
-}
+        function esc(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        render(); // 초기화
+    })();
+    </script>
+</body>
