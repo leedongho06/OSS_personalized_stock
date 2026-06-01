@@ -197,57 +197,56 @@ def kospi_top10():
                 break
 
         if not base_date:
-            return render_template("kospi.html", stocks=[], updated="-")
+            return render_template("kospi.html", stocks=[], updated="-", base_date="-")
 
-        # 전날 종가 기준 시가총액 상위 종목 가져오기
-        tickers = pykrx_stock.get_market_ticker_list(base_date, market="KOSPI")
+        # stocks.csv에서 종목 목록 로드
+        stock_df = pd.read_csv("data/stocks.csv")
+        tickers = list(zip(stock_df["ticker"].astype(str).str.zfill(6),
+                           stock_df["name"]))
 
-        # ETF 제외 키워드
-        ETF_KEYWORDS = ["KODEX", "TIGER", "KINDEX", "ARIRANG", "KOSEF", "ACE", "HANARO", "RISE", "SOL"]
-
-        stock_list = []
-        for ticker in tickers:
-            name = pykrx_stock.get_market_ticker_name(ticker)
-            # ETF 제외
-            if any(kw in name for kw in ETF_KEYWORDS):
-                continue
-            stock_list.append((ticker, name))
-
-        # 시가총액 데이터
-        cap_data = []
-        for ticker, name in stock_list[:200]:  # 상위 200개만 조회
+        stocks = []
+        for ticker, name in tickers:
             try:
                 df = pykrx_stock.get_market_ohlcv_by_date(
                     base_date, base_date, ticker
                 )
                 if not df.empty:
+                    open_price = int(df["시가"].iloc[0])
                     close = int(df["종가"].iloc[0])
                     volume = int(df["거래량"].iloc[0])
-                    change = int(df["종가"].iloc[0] - df["시가"].iloc[0])
+                    marcap = close * volume  # 시가총액 근사값
+                    change = close - open_price
                     change_rate = round(
-                        (change / df["시가"].iloc[0]) * 100, 2
-                    ) if df["시가"].iloc[0] > 0 else 0.0
+                        (change / open_price) * 100, 2
+                    ) if open_price > 0 else 0.0
 
-                    cap_data.append({
+                    stocks.append({
                         "ticker": ticker,
                         "name": name,
                         "close": f"{close:,}",
                         "change": f"{change:+,}",
                         "change_rate": change_rate,
                         "is_up": change >= 0,
-                        "volume": volume,
+                        "marcap": marcap,
                     })
             except Exception:
                 continue
 
-        # 거래량 기준 상위 10개
-        cap_data = sorted(cap_data, key=lambda x: x["volume"], reverse=True)[:10]
+        # 시가총액 기준 상위 10개 정렬
+        stocks = sorted(stocks, key=lambda x: x["marcap"], reverse=True)[:10]
+
         now = datetime.now().strftime("%H:%M:%S")
-        return render_template("kospi.html", stocks=cap_data, updated=now, base_date=base_date)
+        return render_template(
+            "kospi.html",
+            stocks=stocks,
+            updated=now,
+            base_date=base_date
+        )
 
     except Exception as e:
         print(f"오류: {e}")
         return render_template("kospi.html", stocks=[], updated="-", base_date="-")
+            
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
