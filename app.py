@@ -143,7 +143,6 @@ def add_trade():
     name = request.form.get("name", "")
     buy_price = float(request.form.get("buy_price", 0))
     sell_price = float(request.form.get("sell_price", 0))
-    rating = int(request.form.get("rating", 3))
 
     # DB 저장
     save_trade(name, buy_price, sell_price, rating)
@@ -162,6 +161,22 @@ def add_trade():
         "score": rating,
     })
     session["history"] = history
+
+    return redirect(url_for("journal"))
+
+@app.route("/journal/rate", methods=["POST"])
+def rate_trade():
+    trade_id = int(request.form.get("trade_id", 0))
+    rating = int(request.form.get("rating", 3))
+
+    # DB 업데이트
+    update_trade_rating(trade_id, rating)
+
+    # Q-learning 학습 반영
+    style = session.get("style", "중립형")
+    sector = session.get("sector", "IT")
+    reward = normalize_reward(rating)
+    train(style, sector, reward)
 
     return redirect(url_for("journal"))
 

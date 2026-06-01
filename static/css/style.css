@@ -184,3 +184,36 @@ header p { color: #718096; }
 
 .profit { color: #e53e3e; font-weight: 600; }
 .loss   { color: #3182ce; font-weight: 600; }
+
+.star-rating-inline {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 2px;
+}
+
+.star-rating-inline input { display: none; }
+
+.star-rating-inline label {
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #cbd5e0;
+    transition: color 0.2s;
+}
+
+.star-rating-inline input:checked ~ label,
+.star-rating-inline label:hover,
+.star-rating-inline label:hover ~ label {
+    color: #f6ad55;
+}
+
+.btn-rate {
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-left: 6px;
+    vertical-align: middle;
+}

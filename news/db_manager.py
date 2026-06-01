@@ -22,7 +22,6 @@ def init_news_table():
     """)
     conn.commit()
     conn.close()
-    print("뉴스 테이블 초기화 완료")
 
 
 def save_news(news_list: list):
@@ -91,8 +90,10 @@ def get_news_count() -> int:
     conn.close()
     return count
 
-# 매매일지 테이블 생성
+
 def init_trade_table():
+    """매매일지 테이블 생성."""
+    os.makedirs("data", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -102,7 +103,7 @@ def init_trade_table():
             buy_price REAL,
             sell_price REAL,
             profit_rate REAL,
-            rating INTEGER,
+            rating INTEGER DEFAULT 0,
             created_at TEXT
         )
     """)
@@ -111,7 +112,7 @@ def init_trade_table():
 
 
 def save_trade(name: str, buy_price: float,
-               sell_price: float, rating: int):
+               sell_price: float, rating: int = 0):
     """매매일지 저장 및 수익률 자동 계산."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -136,7 +137,7 @@ def load_trades() -> list:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT name, buy_price, sell_price, profit_rate, rating, created_at
+        SELECT id, name, buy_price, sell_price, profit_rate, rating, created_at
         FROM trade_journal
         ORDER BY created_at DESC
     """)
@@ -145,12 +146,24 @@ def load_trades() -> list:
 
     return [
         {
-            "name": row[0],
-            "buy_price": row[1],
-            "sell_price": row[2],
-            "profit_rate": row[3],
-            "rating": row[4],
-            "created_at": row[5],
+            "id": row[0],
+            "name": row[1],
+            "buy_price": row[2],
+            "sell_price": row[3],
+            "profit_rate": row[4],
+            "rating": row[5],
+            "created_at": row[6],
         }
         for row in rows
     ]
+
+
+def update_trade_rating(trade_id: int, rating: int):
+    """매매일지 만족도 업데이트."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE trade_journal SET rating = ? WHERE id = ?
+    """, (rating, trade_id))
+    conn.commit()
+    conn.close()
