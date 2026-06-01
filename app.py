@@ -144,10 +144,10 @@ def journal():
     chart_data = []
 
     if trades:
-        total = sum(t["buy_price"] for t in trades)
+        total = sum(t["price"] for t in trades if t["price"])
         name_totals = {}
         for t in trades:
-            name_totals[t["name"]] = name_totals.get(t["name"], 0) + t["buy_price"]
+            name_totals[t["name"]] = name_totals.get(t["name"], 0) + (t["price"] or 0)
 
         for name, amount in name_totals.items():
             chart_labels.append(name)
