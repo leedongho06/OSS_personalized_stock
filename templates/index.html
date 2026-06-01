@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>맞춤형 주식 추천 시스템</title>
-    <!-- 분리한 CSS 파일 불러오기 -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -20,24 +19,24 @@
                 <p>관심 있는 기업을 입력하면<br>투자 성향을 분석해드립니다</p>
 
                 <form id="rec-form" action="/recommend" method="POST">
-                    <!-- 태그 입력 영역 -->
-                    <div id="tag-field" class="tag-field" onclick="handleFieldClick(event)">
-                        <input
-                            id="tag-text"
-                            class="tag-text"
-                            type="text"
-                            placeholder="예: 삼성전자, 카카오, 현대차…"
-                            maxlength="30"
-                            autocomplete="off"
-                            spellcheck="false"
-                        >
+                    <div class="ac-wrap">
+                        <div id="tag-field" class="tag-field" onclick="handleFieldClick(event)">
+                            <input
+                                id="tag-text"
+                                class="tag-text"
+                                type="text"
+                                placeholder="예: 삼성전자, 카카오, 현대차…"
+                                maxlength="30"
+                                autocomplete="off"
+                                spellcheck="false"
+                            >
+                        </div>
                     </div>
 
-                    <!-- 힌트 & 카운터 -->
                     <div class="tag-meta">
                         <kbd>Enter</kbd> 또는 <kbd>,</kbd> 로 추가 · <kbd>←</kbd> 로 삭제
                         <span class="spacer"></span>
-                        <button type="button" id="reset-btn" class="tag-reset" style="display:none" onclick="clearTags()">
+                        <button type="button" id="reset-btn" class="tag-reset" style="display:none" onclick="clearTagsAll()">
                             전체 삭제
                         </button>
                         <span id="tag-count" class="tag-count" style="display:none"></span>
@@ -59,161 +58,6 @@
         </div>
     </div>
 
-    <script>
-    (() => {
-        const MAX = 10;
-        let tags = [];
-
-        const field     = document.getElementById('tag-field');
-        const textInput = document.getElementById('tag-text');
-        const countEl   = document.getElementById('tag-count');
-        const resetBtn  = document.getElementById('reset-btn');
-        const submitBtn = document.getElementById('submit-btn');
-        const form      = document.getElementById('rec-form');
-
-        /* ── 렌더링 ──────────────────────────────────── */
-        function render() {
-            // 기존 태그 pill 제거
-            field.querySelectorAll('.tag-pill').forEach(el => el.remove());
-
-            // 태그 다시 그리기 (input 앞에 삽입)
-            tags.forEach((name, i) => {
-                const pill = document.createElement('span');
-                pill.className = 'tag-pill';
-                pill.innerHTML = `<span>${esc(name)}</span><button type="button" class="tag-x" data-i="${i}" aria-label="${esc(name)} 삭제">✕</button>`;
-                field.insertBefore(pill, textInput);
-            });
-
-            // 카운터 & 버튼 상태
-            const hasTag = tags.length > 0;
-            const atMax  = tags.length >= MAX;
-
-            countEl.style.display  = hasTag ? '' : 'none';
-            countEl.textContent    = `${tags.length}/${MAX}`;
-            countEl.classList.toggle('warn', atMax);
-
-            resetBtn.style.display = hasTag ? '' : 'none';
-            submitBtn.disabled     = !hasTag;
-
-            textInput.disabled    = atMax;
-            textInput.placeholder = tags.length === 0
-                ? '예: 삼성전자, 카카오, 현대차…'
-                : atMax ? '' : '추가 입력…';
-
-            field.classList.toggle('is-max', atMax);
-
-            syncHidden();
-        }
-
-        /* ── 히든 input 동기화 (form POST) ──────────── */
-        function syncHidden() {
-            form.querySelectorAll('input[name="companies"]').forEach(el => el.remove());
-            tags.forEach(name => {
-                const h = document.createElement('input');
-                h.type  = 'hidden';
-                h.name  = 'companies';
-                h.value = name;
-                form.appendChild(h);
-            });
-        }
-
-        /* ── 태그 추가 ───────────────────────────────── */
-        function addTag(raw) {
-            const value = raw.trim().replace(/,+$/, '').trim();
-            if (!value) return;
-            if (tags.length >= MAX) return;
-
-            // 중복 감지 → 기존 pill 흔들기
-            const idx = tags.findIndex(t => t === value);
-            if (idx !== -1) {
-                const pill = field.querySelectorAll('.tag-pill')[idx];
-                if (pill) {
-                    pill.classList.remove('dup');
-                    void pill.offsetWidth;          // reflow
-                    pill.classList.add('dup');
-                    setTimeout(() => pill.classList.remove('dup'), 350);
-                }
-                return;
-            }
-
-            tags.push(value);
-            render();
-        }
-
-        /* ── 태그 삭제 ───────────────────────────────── */
-        function removeTag(i) {
-            tags.splice(i, 1);
-            render();
-            if (!textInput.disabled) textInput.focus();
-        }
-
-        /* ── 전체 삭제 ───────────────────────────────── */
-        function clearTags() {
-            tags = [];
-            render();
-            textInput.focus();
-        }
-        window.clearTags = clearTags;
-
-        /* ── 쉼표 포함 붙여넣기 처리 ────────────────── */
-        function processCommaInput(raw) {
-            if (!raw.includes(',')) return false;
-            const parts = raw.split(',');
-            parts.forEach((part, i) => {
-                if (i < parts.length - 1) addTag(part);
-            });
-            textInput.value = parts[parts.length - 1].trimStart();
-            return true;
-        }
-
-        /* ── 이벤트 ──────────────────────────────────── */
-        textInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter' || e.key === ',') {
-                e.preventDefault();
-                if (textInput.value.trim()) {
-                    addTag(textInput.value);
-                    textInput.value = '';
-                }
-            } else if (e.key === 'Backspace' && textInput.value === '' && tags.length > 0) {
-                removeTag(tags.length - 1);
-            }
-        });
-
-        textInput.addEventListener('input', () => {
-            processCommaInput(textInput.value);
-        });
-
-        // pill X 버튼 클릭 (이벤트 위임)
-        field.addEventListener('click', e => {
-            const btn = e.target.closest('.tag-x');
-            if (btn) {
-                e.stopPropagation();
-                removeTag(Number(btn.dataset.i));
-            }
-        });
-
-        // 영역 클릭 → input 포커스
-        function handleFieldClick(e) {
-            if (!e.target.closest('.tag-x') && !textInput.disabled) {
-                textInput.focus();
-            }
-        }
-        window.handleFieldClick = handleFieldClick;
-
-        // 제출 전 검증
-        form.addEventListener('submit', e => {
-            if (tags.length === 0) { e.preventDefault(); textInput.focus(); }
-        });
-
-        function esc(str) {
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-
-        render(); // 초기화
-    })();
-    </script>
+    <script src="{{ url_for('static', filename='js/autocomplete.js') }}" defer></script>
 </body>
+</html>
