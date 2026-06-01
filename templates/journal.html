@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>투자 매매일지</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1> 투자 매매일지</h1>
+            <h1>📒 투자 매매일지</h1>
             <p>나의 투자 기록을 관리하세요</p>
         </header>
 
+        <!-- 매매 기록 추가 (만족도 없음) -->
         <div class="card">
             <h2>➕ 매매 기록 추가</h2>
             <form action="/journal/add" method="POST">
@@ -25,24 +27,15 @@
                 <input type="number" name="sell_price"
                        placeholder="매도가 (예: 75000)"
                        class="input-field" step="0.01" required>
-                <p style="margin-bottom:0.5rem; color:#718096; font-size:0.9rem;">
-                    추천 만족도 (Q-learning 학습에 반영됩니다)
-                </p>
-                <div class="star-rating">
-                    {% for star in [5,4,3,2,1] %}
-                    <input type="radio" name="rating"
-                           id="r{{ star }}" value="{{ star }}" required>
-                    <label for="r{{ star }}">★</label>
-                    {% endfor %}
-                </div>
                 <button type="submit" class="btn btn-primary">
-                    기록 추가 + 학습 반영
+                    매매 기록 추가
                 </button>
             </form>
         </div>
 
+        <!-- 매매 이력 + 만족도 평가 -->
         <div class="card">
-            <h2> 매매 이력</h2>
+            <h2>📋 매매 이력</h2>
             {% if trades %}
             <table class="stock-table">
                 <thead>
@@ -51,7 +44,7 @@
                         <th>매수가</th>
                         <th>매도가</th>
                         <th>수익률</th>
-                        <th>만족도</th>
+                        <th>만족도 평가</th>
                         <th>날짜</th>
                     </tr>
                 </thead>
@@ -64,7 +57,24 @@
                         <td class="{% if t.profit_rate > 0 %}profit{% else %}loss{% endif %}">
                             {{ t.profit_rate }}%
                         </td>
-                        <td>{{ '⭐' * t.rating }}</td>
+                        <td>
+                            {% if t.rating and t.rating > 0 %}
+                                {{ '⭐' * t.rating }}
+                            {% else %}
+                                <form action="/journal/rate" method="POST" style="display:flex; align-items:center; gap:6px;">
+                                    <input type="hidden" name="trade_id" value="{{ t.id }}">
+                                    <div class="star-rating-inline">
+                                        {% for star in [5,4,3,2,1] %}
+                                        <input type="radio" name="rating"
+                                               id="r{{ t.id }}_{{ star }}"
+                                               value="{{ star }}" required>
+                                        <label for="r{{ t.id }}_{{ star }}">★</label>
+                                        {% endfor %}
+                                    </div>
+                                    <button type="submit" class="btn-rate">평가</button>
+                                </form>
+                            {% endif %}
+                        </td>
                         <td>{{ t.created_at }}</td>
                     </tr>
                     {% endfor %}
@@ -76,6 +86,54 @@
             </p>
             {% endif %}
         </div>
+
+        <!-- 전체 자산 비율 원형 그래프 -->
+        {% if trades %}
+        <div class="card">
+            <h2>🥧 종목별 투자 비율</h2>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <canvas id="portfolioChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const labels = {{ chart_labels | tojson }};
+            const data = {{ chart_data | tojson }};
+            const colors = [
+                '#3182ce', '#63b3ed', '#90cdf4',
+                '#2b6cb0', '#bee3f8', '#ebf8ff',
+                '#1a365d', '#2a4365', '#2c5282', '#2d3748'
+            ];
+
+            new Chart(document.getElementById('portfolioChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, data.length),
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+        {% endif %}
 
         <a href="/portfolio" class="btn btn-secondary">포트폴리오로</a>
         <a href="/" class="btn btn-secondary">메인으로</a>
