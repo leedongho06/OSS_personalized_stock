@@ -280,3 +280,19 @@ header p { color: #718096; }
     text-decoration: none;
     font-weight: 500;
 }
+
+.trade-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.buy { background: #fff5f5; color: #e53e3e; }
+.sell { background: #ebf8ff; color: #3182ce; }
+
+select.input-field {
+    appearance: none;
+    background-color: white;
+    cursor: pointer;
+}
