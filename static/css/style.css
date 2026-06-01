@@ -217,3 +217,66 @@ header p { color: #718096; }
     margin-left: 6px;
     vertical-align: middle;
 }
+
+.kospi-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.kospi-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f7fafc;
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+
+.kospi-item:hover { background: #ebf8ff; }
+
+.kospi-rank {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2b6cb0;
+    min-width: 28px;
+    text-align: center;
+}
+
+.kospi-info { flex: 1; }
+
+.kospi-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.kospi-ticker {
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+.kospi-price { text-align: right; }
+
+.kospi-close {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.rate-badge {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.rate-up { background: #fff5f5; color: #e53e3e; }
+.rate-down { background: #ebf8ff; color: #3182ce; }
+
+.btn-refresh {
+    background: #ebf8ff;
+    color: #2b6cb0;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    text-decoration: none;
+    font-weight: 500;
+}
