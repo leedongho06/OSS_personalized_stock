@@ -7,9 +7,9 @@
     let tags = [];
 
     const acWrap    = document.querySelector('.ac-wrap');
-    const field     = document.getElementById('tag-field');
+    const field      = document.getElementById('tag-field');
     const textInput = document.getElementById('tag-text');
-    const countEl   = document.getElementById('tag-count');
+    const countEl    = document.getElementById('tag-count');
     const resetBtn  = document.getElementById('reset-btn');
     const submitBtn = document.getElementById('submit-btn');
     const form      = document.getElementById('rec-form');
@@ -57,7 +57,7 @@
             const pill = field.querySelectorAll('.tag-pill')[idx];
             if (pill) {
                 pill.classList.remove('dup');
-                void pill.offsetWidth;
+                void pill.offsetWidth; // 리플로우 트리거로 애니메이션 재시작
                 pill.classList.add('dup');
                 setTimeout(() => pill.classList.remove('dup'), 350);
             }
@@ -81,15 +81,14 @@
     }
 
     // Autocomplete 로직
-    let acIdx = -1;          
-    let acItems = [];        
-    let mouseInDrop = false; 
+    let acIdx = -1;
+    let acItems = [];
 
     function filterCompanies(q) {
         if (!q) return [];
         const results = [];
         for (const c of COMPANIES) {
-            if (tags.includes(c.name)) continue;  
+            if (tags.includes(c.name)) continue;
             const ni = c.name.indexOf(q);
             const ci = c.code.startsWith(q);
             if (ni !== -1 || ci) {
@@ -101,15 +100,18 @@
     }
 
     function openDropdown(matches, query) {
-        closeDropdown(false);
+        closeDropdown();
         acItems = matches;
         acIdx   = -1;
 
         const dd = document.createElement('div');
         dd.id = 'ac-dd';
         dd.className = 'ac-dropdown';
-        dd.addEventListener('mouseenter', () => { mouseInDrop = true; });
-        dd.addEventListener('mouseleave', () => { mouseInDrop = false; });
+        
+        // 중요: 드롭다운 내부 클릭 시 input 포커스가 풀려 blur 이벤트가 발생하는 것을 방지
+        dd.addEventListener('mousedown', e => {
+            e.preventDefault();
+        });
 
         if (matches.length === 0) {
             dd.innerHTML = `<div class="ac-empty">일치하는 기업이 없습니다</div>`;
@@ -122,11 +124,7 @@
                     `<span class="ac-code">${esc(c.code)}</span>` +
                     `<span class="ac-sector">${esc(c.sector)}</span>` +
                     `<span class="ac-market">${esc(c.market)}</span>`;
-                
-                item.addEventListener('mousedown', e => {
-                    e.preventDefault();
-                    mouseInDrop = true;
-                });
+
                 item.addEventListener('click', () => {
                     addTag(c.name);
                     textInput.value = '';
@@ -149,11 +147,11 @@
         acWrap.appendChild(dd);
     }
 
-    function closeDropdown(resetMouse = true) {
+    function closeDropdown() {
         const dd = document.getElementById('ac-dd');
         if (dd) dd.remove();
-        acIdx = -1; acItems = [];
-        if (resetMouse) mouseInDrop = false;
+        acIdx = -1; 
+        acItems = [];
     }
 
     function updateActive() {
@@ -172,6 +170,9 @@
 
     // 이벤트 리스너 바인딩
     textInput.addEventListener('keydown', e => {
+        // 한글 IME 입력 단계에서의 엔터 중복 트리거 방지
+        if (e.isComposing) return;
+
         const ddOpen = !!document.getElementById('ac-dd');
         const itemEls = document.querySelectorAll('#ac-dd .ac-item');
 
@@ -193,11 +194,6 @@
                 closeDropdown();
                 return;
             }
-            if (e.key === 'Tab' && acIdx === -1 && itemEls[0]) {
-                e.preventDefault();
-                itemEls[0].click();
-                return;
-            }
             if (e.key === 'Enter' && acIdx >= 0 && itemEls[acIdx]) {
                 e.preventDefault();
                 itemEls[acIdx].click();
@@ -205,6 +201,7 @@
             }
         }
 
+        // 컴마(,) 혹은 자동완성 미선택 상태에서 엔터 입력 시 직접 추가
         if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault();
             if (textInput.value.trim()) {
@@ -218,6 +215,7 @@
     });
 
     textInput.addEventListener('input', () => {
+        // 컴마 가로채기 분할 처리
         if (textInput.value.includes(',')) {
             const parts = textInput.value.split(',');
             parts.forEach((p, i) => { if (i < parts.length - 1) addTag(p); });
@@ -234,8 +232,8 @@
         }
     });
 
+    // 이제 굳이 마우스 오버 플래그를 체크할 필요 없이 즉시 닫아도 안전합니다.
     textInput.addEventListener('blur', () => {
-        if (mouseInDrop) return;
         closeDropdown();
     });
 
@@ -255,12 +253,16 @@
         }
     }
 
+    // 영역 바깥 클릭 시 닫기 (blur와 상호보완적 안전장치)
     document.addEventListener('mousedown', e => {
         if (!acWrap.contains(e.target)) closeDropdown();
     });
 
     form.addEventListener('submit', e => {
-        if (tags.length === 0) { e.preventDefault(); textInput.focus(); }
+        if (tags.length === 0) { 
+            e.preventDefault(); 
+            textInput.focus(); 
+        }
     });
 
     function esc(str) {
@@ -269,7 +271,7 @@
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // 인라인 HTML 호출용 전역 스코프 매핑 & JSON fetch 초기화
+    // 인라인 HTML 호출용 전역 스코프 매핑
     window.clearTagsAll = clearTagsAll;
     window.handleFieldClick = handleFieldClick;
 
@@ -280,8 +282,8 @@
             return response.json();
         })
         .then(data => {
-            COMPANIES = data; // 가져온 데이터를 상단 전역 배열에 할당
-            render();         // 초기 렌더링 시작
+            COMPANIES = data;
+            render();
         })
         .catch(error => {
             console.error('상장사 데이터를 로드하지 못했습니다:', error);
