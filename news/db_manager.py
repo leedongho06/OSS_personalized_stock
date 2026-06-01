@@ -92,7 +92,6 @@ def get_news_count() -> int:
 
 
 def init_trade_table():
-    """매매일지 테이블 생성."""
     os.makedirs("data", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -100,6 +99,8 @@ def init_trade_table():
         CREATE TABLE IF NOT EXISTS trade_journal (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
+            trade_type TEXT,
+            price REAL,
             buy_price REAL,
             sell_price REAL,
             profit_rate REAL,
@@ -111,33 +112,34 @@ def init_trade_table():
     conn.close()
 
 
-def save_trade(name: str, buy_price: float,
-               sell_price: float, rating: int = 0):
-    """매매일지 저장 및 수익률 자동 계산."""
+def save_trade(name: str, trade_type: str, price: float,
+               buy_price: float = None, sell_price: float = None,
+               rating: int = 0):
+    """매매일지 저장."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    profit_rate = round(
-        ((sell_price - buy_price) / buy_price) * 100, 2
-    ) if buy_price > 0 else 0.0
+    profit_rate = None
+    if buy_price and sell_price and buy_price > 0:
+        profit_rate = round(((sell_price - buy_price) / buy_price) * 100, 2)
 
     cursor.execute("""
         INSERT INTO trade_journal
-        (name, buy_price, sell_price, profit_rate, rating, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (name, buy_price, sell_price, profit_rate, rating, now))
+        (name, trade_type, price, buy_price, sell_price, profit_rate, rating, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (name, trade_type, price, buy_price, sell_price, profit_rate, rating, now))
 
     conn.commit()
     conn.close()
 
 
 def load_trades() -> list:
-    """매매일지 전체 조회."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT id, name, buy_price, sell_price, profit_rate, rating, created_at
+        SELECT id, name, trade_type, price, buy_price, sell_price,
+               profit_rate, rating, created_at
         FROM trade_journal
         ORDER BY created_at DESC
     """)
@@ -148,14 +150,17 @@ def load_trades() -> list:
         {
             "id": row[0],
             "name": row[1],
-            "buy_price": row[2],
-            "sell_price": row[3],
-            "profit_rate": row[4],
-            "rating": row[5],
-            "created_at": row[6],
+            "trade_type": row[2],
+            "price": row[3],
+            "buy_price": row[4],
+            "sell_price": row[5],
+            "profit_rate": row[6],
+            "rating": row[7],
+            "created_at": row[8],
         }
         for row in rows
     ]
+
 
 
 def update_trade_rating(trade_id: int, rating: int):
