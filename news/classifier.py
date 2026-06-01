@@ -1,5 +1,7 @@
+
 import os
 import google.generativeai as genai
+
 
 # 1. 터미널에 등록한 제미나이 키 가져오기
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
@@ -10,7 +12,9 @@ if GEMINI_API_KEY:
 SECTORS = ["IT", "커뮤니케이션", "금융", "헬스케어", "산업재", "유틸리티", "소재", "필수소비재", "임의소비재", "사회/이슈", "기타"]
 
 def classify_sector(title: str, description: str = "") -> str:
+
     """제미나이(Gemini) AI를 이용해 아주 엄격한 기준으로 뉴스 문맥을 분석합니다."""
+
     text = title + " " + description
     
     if not GEMINI_API_KEY:
@@ -61,12 +65,13 @@ def classify_sector(title: str, description: str = "") -> str:
         return "기타"
 
 def add_sector_to_news(news_list: list) -> list:
-    """뉴스 리스트에 섹터 필드 추가."""
     result = []
     for news in news_list:
         title = news.get("title", "").replace("<b>", "").replace("</b>", "")
+
         description = news.get("description", "")
         
+
         sector = classify_sector(title, description)
         
         result.append({
@@ -74,6 +79,5 @@ def add_sector_to_news(news_list: list) -> list:
             "description": description,
             "sector": sector,
             "link": news.get("link", ""),
-            "pubDate": news.get("pubDate", ""),
         })
     return result

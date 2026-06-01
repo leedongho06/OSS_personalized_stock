@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import pandas as pd
-import requests as req
 from recommendation.scorer import infer_style
 from recommendation.filter import filter_by_style
 from recommendation.recommender import recommend
@@ -14,16 +13,25 @@ from news.classifier import add_sector_to_news
 from news.random_picker import pick_random_news
 from news.interest_scorer import calculate_interest
 from news.style_inferrer import infer_style_from_news
-from news.db_manager import init_news_table, save_news, load_news, get_news_count
+from news.db_manager import init_news_table, save_news, load_news, get_news_count, init_trade_table, save_trade, load_trades
+from pykrx import stock as pykrx_stock
+from datetime import datetime, timedelta
+
 
 app = Flask(__name__)
 app.secret_key = "oss_stock_secret"
-BACKEND_URL = "http://localhost:8080"
 
 
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/portfolio")
+def portfolio():
+    style = session.get("style", None)
+    history = session.get("history", [])
+    return render_template("portfolio.html", style=style, history=history)
 
 
 @app.route("/recommend", methods=["POST"])
@@ -33,7 +41,6 @@ def recommend_by_company():
 
     style, score, analyses = infer_style(companies)
     session["style"] = style
-    session["sector"] = "IT"
 
     df = pd.read_csv("data/stocks.csv")
     filtered = filter_by_style(df, style)
@@ -48,6 +55,7 @@ def recommend_by_company():
     state = encode_state(style, sector)
     action = choose_action(q_table, state)
     final = result.iloc[action % len(result)]["name"]
+    session["final"] = final
 
     return render_template(
         "result.html",
@@ -97,6 +105,7 @@ def rate_news():
     state = encode_state(style, sector)
     action = choose_action(q_table, state)
     final = result.iloc[action % len(result)]["name"]
+    session["final"] = final
 
     return render_template(
         "result.html",
@@ -113,8 +122,133 @@ def feedback():
     sector = session.get("sector", "IT")
     reward = normalize_reward(score)
     train(style, sector, reward)
-    return redirect(url_for("index"))
 
+    history = session.get("history", [])
+    history.append({
+        "name": session.get("final", ""),
+        "sector": sector,
+        "score": score,
+    })
+    session["history"] = history
+
+    return redirect(url_for("portfolio"))
+
+
+@app.route("/journal")
+def journal():
+    init_trade_table()
+    trades = load_trades()
+
+    # 원형 그래프 데이터 계산
+    chart_labels = []
+    chart_data = []
+
+    if trades:
+        total = sum(t["price"] for t in trades if t["price"])
+        name_totals = {}
+        for t in trades:
+            name_totals[t["name"]] = name_totals.get(t["name"], 0) + (t["price"] or 0)
+
+        for name, amount in name_totals.items():
+            chart_labels.append(name)
+            chart_data.append(round((amount / total) * 100, 1))
+
+    return render_template(
+        "journal.html",
+        trades=trades,
+        chart_labels=chart_labels,
+        chart_data=chart_data,
+    )
+
+
+@app.route("/journal/add", methods=["POST"])
+def add_trade():
+    name = request.form.get("name", "")
+    trade_type = request.form.get("trade_type", "매수")
+    price = float(request.form.get("price", 0))
+    save_trade(name, trade_type, price)
+    return redirect(url_for("journal"))
+
+@app.route("/journal/rate", methods=["POST"])
+def rate_trade():
+    trade_id = int(request.form.get("trade_id", 0))
+    rating = int(request.form.get("rating", 3))
+
+    # DB 업데이트
+    update_trade_rating(trade_id, rating)
+
+    # Q-learning 학습 반영
+    style = session.get("style", "중립형")
+    sector = session.get("sector", "IT")
+    reward = normalize_reward(rating)
+    train(style, sector, reward)
+
+    return redirect(url_for("journal"))
+
+
+@app.route("/kospi")
+def kospi_top10():
+    try:
+        # 최근 영업일 찾기
+        base_date = None
+        for i in range(1, 10):
+            date = (datetime.today() - timedelta(days=i)).strftime("%Y%m%d")
+            df = pykrx_stock.get_market_ohlcv_by_date(date, date, "005930")
+            if not df.empty:
+                base_date = date
+                break
+
+        if not base_date:
+            return render_template("kospi.html", stocks=[], updated="-", base_date="-")
+
+        # stocks.csv에서 종목 목록 로드
+        stock_df = pd.read_csv("data/stocks.csv")
+        tickers = list(zip(stock_df["ticker"].astype(str).str.zfill(6),
+                           stock_df["name"]))
+
+        stocks = []
+        for ticker, name in tickers:
+            try:
+                df = pykrx_stock.get_market_ohlcv_by_date(
+                    base_date, base_date, ticker
+                )
+                if not df.empty:
+                    open_price = int(df["시가"].iloc[0])
+                    close = int(df["종가"].iloc[0])
+                    volume = int(df["거래량"].iloc[0])
+                    marcap = close * volume  # 시가총액 근사값
+                    change = close - open_price
+                    change_rate = round(
+                        (change / open_price) * 100, 2
+                    ) if open_price > 0 else 0.0
+
+                    stocks.append({
+                        "ticker": ticker,
+                        "name": name,
+                        "close": f"{close:,}",
+                        "change": f"{change:+,}",
+                        "change_rate": change_rate,
+                        "is_up": change >= 0,
+                        "marcap": marcap,
+                    })
+            except Exception:
+                continue
+
+        # 시가총액 기준 상위 10개 정렬
+        stocks = sorted(stocks, key=lambda x: x["marcap"], reverse=True)[:10]
+
+        now = datetime.now().strftime("%H:%M:%S")
+        return render_template(
+            "kospi.html",
+            stocks=stocks,
+            updated=now,
+            base_date=base_date
+        )
+
+    except Exception as e:
+        print(f"오류: {e}")
+        return render_template("kospi.html", stocks=[], updated="-", base_date="-")
+            
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
