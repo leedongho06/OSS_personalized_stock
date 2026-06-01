@@ -34,6 +34,7 @@
             margin-bottom: 40px; 
             font-size: 15px; 
         }
+        
         /* 뉴스 카드 디자인 */
         .news-card { 
             border: 1px solid #e2e8f0; 
@@ -48,6 +49,7 @@
             box-shadow: 0 12px 24px rgba(0,0,0,0.1); 
             border-color: #cbd5e1; 
         }
+        
         /* AI 섹터 배지 */
         .sector-badge { 
             display: inline-block; 
@@ -60,15 +62,14 @@
             margin-bottom: 15px; 
             border: 1px solid #bfdbfe; 
         }
+        
         /* 뉴스 텍스트 */
         .news-title { font-size: 19px; font-weight: bold; margin: 0 0 12px 0; line-height: 1.4; color: #0f172a; }
         .news-desc { color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 20px; }
         .news-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 20px; }
         .news-link { color: #3b82f6; text-decoration: none; font-weight: 600; }
-        .news-link:hover { text-decoration: underline; color: #2563eb; }
-        .submit-btn { display: block; width: 100%; font-size: 18px; font-weight: bold; padding: 18px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; margin-top: 40px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
-        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.6); }
-
+        .submit-btn { display: block; width: 100%; font-size: 18px; font-weight: bold; padding: 18px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; margin-top: 40px; }
+        
         /* ⭐ 별점 UI 전용 CSS */
         .rating-box { 
             background-color: #f8fafc; 
@@ -86,6 +87,15 @@
         .star-rating input:checked ~ label, 
         .star-rating label:hover, 
         .star-rating label:hover ~ label { color: #fbbf24; }
+
+        /* ⭐ 시나리오 3: 형광펜 하이라이트 효과 디자인 */
+        .highlight-word {
+            background: linear-gradient(180deg, rgba(255,255,255,0) 60%, #fde047 40%);
+            font-weight: 800;
+            color: #0f172a;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
@@ -97,7 +107,6 @@
             <div class="news-card">
                 <div class="sector-badge">{{ n.sector }}</div>
                 
-                <!-- 💡 태그를 지우는 옵션 -->
                 <h3 class="news-title">{{ n.title | striptags }}</h3>
                 <p class="news-desc">{{ n.description | striptags }}</p>
                 
@@ -109,7 +118,6 @@
                 <div class="rating-box">
                     <span class="rating-label">이 뉴스에 대한 관심도는? 👉</span>
                     
-                    <!-- ⭐ 별점 HTML 코드 -->
                     <div class="star-rating">
                         <input type="radio" id="star5_{{ loop.index0 }}" name="rating_{{ loop.index0 }}" value="5">
                         <label for="star5_{{ loop.index0 }}" title="5점">★</label>
@@ -128,5 +136,25 @@
             <button type="submit" class="submit-btn">평가 완료하고 맞춤형 주식 추천받기 ✨</button>
         </form>
     </div>
+
+    <!-- ⭐ 시나리오 3: 주요 종목을 자동으로 찾아 형광펜을 그어주는 스크립트 -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 하이라이트할 핵심 주식 종목 이름들
+            const targetKeywords = ["삼성전자", "SK하이닉스", "카카오", "NAVER", "네이버", "현대차", "기아", "셀트리온", "LG화학", "두산", "한전", "LG유플러스", "이마트"];
+            
+            const textElements = document.querySelectorAll('.news-title, .news-desc');
+            
+            textElements.forEach(el => {
+                let htmlContent = el.innerHTML;
+                targetKeywords.forEach(keyword => {
+                    // 단어를 찾아서 예쁜 형광펜 디자인 태그로 감싸줍니다.
+                    const regex = new RegExp(keyword, "g");
+                    htmlContent = htmlContent.replace(regex, `<span class="highlight-word">${keyword}</span>`);
+                });
+                el.innerHTML = htmlContent;
+            });
+        });
+    </script>
 </body>
 </html>
