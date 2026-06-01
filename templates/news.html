@@ -103,8 +103,11 @@
             <div class="news-card">
                 <!-- AI가 달아준 예쁜 둥근 배지 -->
                 <div class="sector-badge">{{ n.sector }}</div>
-                <h3 class="news-title">{{ n.title }}</h3>
-                <p class="news-desc">{{ n.description }}</p>
+                
+                <!-- 💡 태그(<b> 등)를 지우는 옵션이 적용되어 있습니다! -->
+                <h3 class="news-title">{{ n.title | striptags }}</h3>
+                <p class="news-desc">{{ n.description | striptags }}</p>
+                
                 <div class="news-meta">
                     <a href="{{ n.link }}" class="news-link" target="_blank">🔗 기사 원문 보기</a> 
                     <span class="news-date">{{ n.pubDate }}</span>
