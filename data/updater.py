@@ -1,20 +1,20 @@
 import os
 import sys
 import time
+import random
 import sqlite3
 import pandas as pd
-from datetime import datetime, timedelta
 import FinanceDataReader as fdr
-from pykrx import stock
+from datetime import datetime, timedelta
 
 # 상위 폴더의 모듈들을 불러오기 위한 경로 설정
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data.preprocessor import preprocess_stock_data
 from data.validator import validate_stock_data
-from database.db_manager import save_daily_data 
+from database.db_manager import save_daily_data, DB_PATH, TABLE_NAME
 
-# [확장] 성현님이 요청하신 100개 전 종목 Ticker 맵 수립
+# 100개 핵심 기업 종목코드 맵
 TICKER_MAP = {
     "삼성전자": "005930", "SK하이닉스": "000660", "POSCO홀딩스": "005490", "현대차": "005380",
     "기아": "000270", "NAVER": "035420", "LG화학": "051910", "삼성SDI": "006400",
@@ -43,177 +43,87 @@ TICKER_MAP = {
     "하이브": "352820", "태광산업": "003240", "한미사이언스": "008930", "휴젤": "145020"
 }
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "data", "stock_data.db")
-TABLE_NAME = "daily_prices"
-
-
-def get_latest_date_from_db(ticker_code):
+def get_latest_date_in_db() -> str:
+    """DB에 저장되어 있는 가장 최신 데이터의 날짜를 yyyy-mm-dd 형식으로 반환합니다."""
     if not os.path.exists(DB_PATH):
-        return None
+        return ""
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        query = f"SELECT MAX(date) FROM {TABLE_NAME} WHERE ticker = '{ticker_code}'"
-        cursor.execute(query)
-        result = cursor.fetchone()
+        cursor.execute(f"SELECT MAX(date) FROM {TABLE_NAME}")
+        row = cursor.fetchone()
         conn.close()
-        if result and result[0]:
-            return result[0]
+        return row[0] if row and row[0] else ""
+    except Exception:
+        return ""
+
+def fetch_stock_data(ticker, start_date, end_date):
+    """지정한 범위의 주가 데이터를 FDR을 통해 수집합니다."""
+    try:
+        df = fdr.DataReader(ticker, start_date, end_date)
+        return df
     except Exception as e:
-        print(f"[Warning] DB에서 {ticker_code} 날짜 조회 실패: {e}")
-    return None
-
-
-def fetch_krx_financial_metrics():
-    """
-    [지표 최적화 수집] FDR 및 pykrx를 우선 사용하되, 주말/휴장일 서버 무응답 시 
-    성현님이 지정하신 100개 종목의 실제 시장 정적 지표(PER/PBR) 맵을 완벽하게 주입합니다.
-    """
-    print("   [FDR] KRX 상장 정보 및 재무 지표(PER/PBR) 수집 중...")
-    today_ymd = datetime.now().strftime('%Y%m%d')
-    
-    try:
-        df_krx = fdr.StockListing('KRX')
-        if 'PER' in df_krx.columns and 'PBR' in df_krx.columns:
-            df_metrics = df_krx[['Code', 'PER', 'PBR']].copy()
-            df_metrics['Code'] = df_metrics['Code'].astype(str).str.zfill(6)
-            per_map = pd.Series(df_metrics.PER.values, index=df_metrics.Code).to_dict()
-            pbr_map = pd.Series(df_metrics.PBR.values, index=df_metrics.Code).to_dict()
-            return per_map, pbr_map
-    except Exception:
-        pass
-        
-    try:
-        per_map, pbr_map = {}, {}
-        for market in ["KOSPI", "KOSDAQ"]:
-            df_pykrx = stock.get_market_fundamental_by_ticker(today_ymd, market=market)
-            if not df_pykrx.empty and 'PER' in df_pykrx.columns:
-                for ticker_code, row in df_pykrx.iterrows():
-                    code_str = str(ticker_code).zfill(6)
-                    per_map[code_str] = float(row.get('PER', 0.0))
-                    pbr_map[code_str] = float(row.get('PBR', 0.0))
-        if per_map:
-            return per_map, pbr_map
-    except Exception:
-        pass
-        
-    print("   💡 [시스템] 거래소 서버 지표 차단 감지: 내장된 100대 기업 실제 재무 데이터 맵을 가동합니다.")
-    
-    # 100대 기업용 현실적인 재무 데이터 백업 세트 (섹터 지표 기반 보정값)
-    backup_per = {
-        "005930": 11.5, "000660": 13.2, "005490": 14.8, "005380": 7.5, "000270": 6.8, "035420": 22.1,
-        "051910": 16.3, "006400": 19.5, "035720": 28.4, "068270": 35.6, "003550": 9.2, "028260": 10.4,
-        "012330": 7.2, "096770": 12.5, "017670": 10.2, "030200": 9.8, "055550": 6.2, "105560": 5.8,
-        "086790": 4.9, "316140": 4.5, "032830": 7.1, "009150": 14.2, "018260": 15.6, "034730": 11.8,
-        "011200": 6.1, "010130": 18.2, "251270": 30.1, "047050": 11.2, "066570": 10.8, "009830": 15.1,
-        "003490": 8.4, "090430": 25.4, "010950": 9.1, "161390": 8.2, "000810": 6.9, "024110": 4.1,
-        "139480": 8.9, "011070": 12.3, "097950": 11.1, "001040": 13.5, "021240": 12.8, "402340": 11.4,
-        "078930": 5.2, "000100": 38.2, "088350": 4.2, "071050": 5.1, "008770": 21.2, "018880": 16.5,
-        "011780": 7.9, "042700": 45.2, "000720": 8.3, "272210": 13.8, "003670": 40.5, "326030": 65.2,
-        "207940": 55.2, "128940": 33.1, "036570": 24.5, "112040": 28.1, "263750": 32.4, "035900": 22.8,
-        "041510": 21.4, "006800": 5.9, "016360": 5.7, "029780": 6.3, "180640": 18.2, "000080": 16.1,
-        "007070": 12.1, "004020": 6.7, "010060": 8.5, "005070": 19.3, "000670": 14.1, "001450": 5.3,
-        "004490": 12.4, "006260": 13.1, "001820": 11.7, "005830": 5.5, "002790": 17.2, "004000": 11.3,
-        "011170": 10.9, "023530": 7.8, "004990": 9.5, "033780": 11.6, "000210": 8.1, "047810": 27.2,
-        "009540": 24.1, "010140": 14.3, "042660": 16.2, "267250": 9.4, "329180": 29.3, "015760": 8.1,
-        "036460": 7.4, "071970": 15.2, "011155": 7.8, "000150": 12.1, "034020": 22.4, "241560": 11.2,
-        "352820": 41.2, "003240": 6.8, "008930": 25.1, "145020": 29.5
-    }
-    backup_pbr = {
-        "005930": 1.35, "000660": 1.52, "005490": 0.62, "005380": 0.65, "000270": 0.82, "035420": 1.41,
-        "051910": 1.45, "006400": 1.22, "035720": 1.95, "068270": 4.12, "003550": 0.55, "028260": 0.71,
-        "012330": 0.51, "096770": 0.82, "017670": 0.92, "030200": 0.68, "055550": 0.42, "105560": 0.39,
-        "086790": 0.32, "316140": 0.31, "032830": 0.41, "009150": 1.12, "018260": 1.31, "034730": 0.88,
-        "011200": 0.75, "010130": 1.42, "251270": 1.51, "047050": 0.95, "066570": 0.85, "009830": 0.68,
-        "003490": 0.91, "090430": 2.11, "010950": 1.05, "161390": 0.72, "000810": 0.78, "024110": 0.31,
-        "139480": 0.35, "011070": 1.45, "097950": 0.72, "001040": 0.65, "021240": 1.82, "402340": 0.92,
-        "078930": 0.41, "000100": 2.85, "088350": 0.28, "071050": 0.49, "008770": 1.95, "018880": 0.98,
-        "011780": 0.82, "042700": 7.52, "000720": 0.51, "272210": 1.15, "003670": 3.42, "326030": 3.92,
-        "207940": 8.52, "128940": 2.65, "036570": 1.62, "112040": 2.12, "263750": 1.45, "035900": 2.92,
-        "041510": 2.15, "006800": 0.41, "016360": 0.48, "029780": 0.52, "180640": 2.32, "000080": 1.15,
-        "007070": 0.71, "004020": 0.31, "010060": 0.81, "005070": 2.12, "000670": 0.32, "001450": 0.51,
-        "004490": 0.62, "006260": 1.11, "001820": 1.02, "005830": 0.75, "002790": 0.92, "004000": 0.48,
-        "011170": 0.45, "023530": 0.28, "004990": 0.55, "033780": 1.18, "000210": 0.42, "047810": 2.31,
-        "009540": 1.62, "010140": 1.82, "042660": 2.15, "267250": 0.61, "329180": 3.12, "015760": 0.33,
-        "036460": 0.45, "071970": 1.25, "011155": 0.28, "000150": 0.75, "034020": 1.35, "241560": 1.15,
-        "352820": 2.85, "003240": 0.35, "008930": 1.72, "145020": 3.45
-    }
-    return backup_per, backup_pbr
-
+        print(f"   [API 에러] {ticker} 수집 실패: {e}")
+        return pd.DataFrame()
 
 def run_daily_updater():
-    print("=== [Updater] 100대 종목 대용량 주식 데이터 파이프라인 가동 ===")
+    """날짜를 체크하여 누락된 데이터만 스마트하게 스마트 갱신하는 코어 파이프라인"""
+    print("\n[Data Engine] 로컬 자산 레포지토리 날짜 검증 중...")
+    
+    latest_db_date = get_latest_date_in_db()
     today_str = datetime.now().strftime('%Y-%m-%d')
     
-    per_map, pbr_map = fetch_krx_financial_metrics()
-    
-    # 순회 시작
-    for i, (name, code) in enumerate(TICKER_MAP.items(), start=1):
-        print(f"\n>>> [{i}/100] [{name} ({code})] 업데이트 확인 중...")
+    # 1. 기저 데이터가 아예 없는 경우 -> 최초 1회 전체 빌드 (최근 30일치)
+    if not latest_db_date:
+        print("   -> 💡 로컬 DB가 비어있습니다. 최초 1회 초기 전체 빌드를 시작합니다 (30일 분량).")
+        start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    else:
+        # 2. 날짜가 동일한 경우 -> 장 마감 전이거나 오늘 이미 업데이트 완료됨 (스킵)
+        if latest_db_date == today_str:
+            print(f"   -> ✅ 데이터가 최신 상태입니다 (최신 기록일: {latest_db_date}). 동적 업데이트를 스킵합니다.")
+            return
         
-        last_date_str = get_latest_date_from_db(code)
+        # 3. 날짜가 다른 경우 -> 마지막 저장일 다음 날부터 오늘까지 수집 범위 최적화
+        last_dt = datetime.strptime(latest_db_date, '%Y-%m-%d')
+        start_date = (last_dt + timedelta(days=1)).strftime('%Y-%m-%d')
         
-        if last_date_str:
-            last_date = datetime.strptime(last_date_str, '%Y-%m-%d')
-            start_date = (last_date + timedelta(days=1)).strftime('%Y-%m-%d')
-            if start_date > today_str:
-                print("    [통과] 이미 최신화되어 있습니다.")
-                continue
-        else:
-            print("    [Info] DB 신규 진입 기업. 최근 1년 치 주가 데이터 수집.")
-            start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+        # 만약 금요일 장 마감 후 주말(토/일) 동안 실행하는 것이라면, start_date가 오늘보다 미래일 수 있으므로 안전 가드
+        if start_date > today_str:
+            print(f"   -> ✅ 영업일 기준 최신 상태입니다. (최신 기록일: {latest_db_date}).")
+            return
 
-        print(f"    [수집] {start_date} ~ {today_str} 데이터 요청...")
-        
+        print(f"   -> 🔄 날짜 바뀜 감지! 업데이트 범위: [{start_date}] ~ [{today_str}]")
+
+    total_stocks = len(TICKER_MAP)
+    print(f"--- 총 {total_stocks}개 우량 기업 증분 데이터 적재 가동 ---")
+    
+    for i, (name, code) in enumerate(TICKER_MAP.items(), start=1):
         try:
-            df = fdr.DataReader(code, start_date, today_str)
+            df = fetch_stock_data(code, start_date=start_date, end_date=today_str)
+            
             if df.empty:
-                print(f"    [스킵] 해당 기간에 적재할 주가 데이터가 없습니다.")
                 continue
                 
             df = df.reset_index()
-            df['ticker'] = code 
-            
-            # 전처리 레이어 가동
             clean_df = preprocess_stock_data(df)
             
-            # [🔥 대량 데이터 품질 방어] 거래정지 등으로 거래량이 0인 일자는 분석 신뢰도를 위해 제외
-            if 'volume' in clean_df.columns:
-                clean_df = clean_df[clean_df['volume'] > 0].reset_index(drop=True)
-                
             if clean_df.empty:
-                print(f"    [스킵] 거래량이 유효한 시계열 데이터가 없습니다.")
                 continue
             
-            # 재무 매핑 및 알고리즘 방어 예외 처리
-            clean_df['per'] = per_map.get(code, 15.0)
-            clean_df['pbr'] = pbr_map.get(code, 1.0)
-            
-            # 수치형 변환 보장 및 0 이하 값 기본 보정
-            clean_df['per'] = pd.to_numeric(clean_df['per'], errors='coerce').fillna(15.0)
-            clean_df['pbr'] = pd.to_numeric(clean_df['pbr'], errors='coerce').fillna(1.0)
-            
-            clean_df.loc[clean_df['per'] <= 0, 'per'] = 15.0
-            clean_df.loc[clean_df['pbr'] <= 0, 'pbr'] = 1.0
-            
-            # 유효성 검증 레이어 통과 (validator.py)
             is_ok, msg = validate_stock_data(clean_df, name)
             if not is_ok:
-                print(f"    [검증 탈락] {msg}")
                 continue
                 
-            # SQLite DB 저장 모듈 호출
             save_daily_data(code, clean_df)
-            print(f"    [적재 완료] {len(clean_df)}일 치 데이터 빌드 성공! (PER: {clean_df['per'].iloc[0]}, PBR: {clean_df['pbr'].iloc[0]})")
+            print(f"   [{i}/{total_stocks}] [{name}] 증분 데이터 적재 완료 (+{len(clean_df)}일)")
             
-            # 대량 수집 시 안정성을 위해 디레이 인터벌 설정 (0.3초)
-            time.sleep(0.3)
+            # 네트워크 부하 방지 무작위 딜레이 (0.3 ~ 0.8초로 갱신 시에는 소폭 단축)
+            time.sleep(random.uniform(0.3, 0.8))
             
         except Exception as e:
-            print(f"    ❌ {name} 데이터 적재 프로세스 중 예외 발생: {e}")
+            print(f"   [오류] {name}: {e}")
 
-    print("\n=== ✨ 100개 대형 종목 데이터베이스 구축 완료! ===")
+    print("--- 로컬 증분 데이터베이스 최신화 완료 ---")
 
 if __name__ == "__main__":
     run_daily_updater()
