@@ -138,7 +138,27 @@ def feedback():
 def journal():
     init_trade_table()
     trades = load_trades()
-    return render_template("journal.html", trades=trades)
+
+    # 원형 그래프 데이터 계산
+    chart_labels = []
+    chart_data = []
+
+    if trades:
+        total = sum(t["buy_price"] for t in trades)
+        name_totals = {}
+        for t in trades:
+            name_totals[t["name"]] = name_totals.get(t["name"], 0) + t["buy_price"]
+
+        for name, amount in name_totals.items():
+            chart_labels.append(name)
+            chart_data.append(round((amount / total) * 100, 1))
+
+    return render_template(
+        "journal.html",
+        trades=trades,
+        chart_labels=chart_labels,
+        chart_data=chart_data,
+    )
 
 
 @app.route("/journal/add", methods=["POST"])
