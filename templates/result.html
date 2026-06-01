@@ -5,13 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>추천 결과</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/radar.css"> 
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="resultContainer" data-style="{{ style }}">
         <header>
             <h1>📊 추천 결과</h1>
             <div class="style-badge">{{ style }}</div>
         </header>
+
+        <div class="card">
+            <h2>🧭 투자 성향 분석</h2>
+            <div class="radar-wrap">
+                <div class="radar-canvas-wrap">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="radar-legend" id="radarLegend"></div>
+            </div>
+        </div>
 
         <div class="card">
             <h2>🏆 최종 추천 종목</h2>
@@ -64,5 +75,8 @@
 
         <a href="/" class="btn btn-secondary">처음으로 돌아가기</a>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/static/js/radar.js"></script>
 </body>
 </html>
