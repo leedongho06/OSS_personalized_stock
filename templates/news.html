@@ -2,37 +2,35 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뉴스 관심도 평가</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>실시간 AI 뉴스 평가</title>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>📰 뉴스 관심도 평가</h1>
-            <p>각 뉴스에 별점을 매겨주세요 (1~5점)</p>
-        </header>
-
-        <form action="/news/rate" method="POST">
-            {% for i in range(news|length) %}
-            <div class="card news-card">
-                <span class="sector-badge">{{ news[i].sector }}</span>
-                <h3>{{ news[i].title }}</h3>
-                <p>{{ news[i].description }}</p>
-                <div class="star-rating">
-                    {% for star in [5,4,3,2,1] %}
-                    <input type="radio" name="rating_{{ i }}"
-                           id="s{{ i }}_{{ star }}"
-                           value="{{ star }}" required>
-                    <label for="s{{ i }}_{{ star }}">★</label>
-                    {% endfor %}
-                </div>
+<body style="font-family: Arial, sans-serif; padding: 20px;">
+    <h2>🔥 실시간 AI 뉴스 분석 및 관심도 평가</h2>
+    <p>제미나이 AI가 방금 인터넷에서 수집한 뉴스의 문맥을 분석해 카테고리를 달았습니다!</p>
+    
+    <form action="/news/rate" method="POST">
+        {% for n in news %}
+        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #f9f9f9;">
+            <!-- 💡 이 부분이 바로 AI가 분류한 섹터를 화면에 보여주는 핵심 코드입니다! -->
+            <h3 style="margin-top: 0;">
+                <span style="color: blue;">[{{ n.sector }}]</span> {{ n.title }}
+            </h3>
+            <p style="color: #555;">{{ n.description }}</p>
+            <p style="font-size: 14px;">
+                <a href="{{ n.link }}" target="_blank">기사 원문 보기</a> 
+                <span style="color: #999;">({{ n.pubDate }})</span>
+            </p>
+            
+            <div style="background-color: #eef; padding: 10px; border-radius: 5px;">
+                <label style="font-weight: bold;">이 뉴스에 대한 관심도를 평가해주세요 (1점~5점): </label>
+                <input type="number" name="rating_{{ loop.index0 }}" min="1" max="5" value="3" style="width: 50px;">
             </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-primary">
-                분석 결과 보기
-            </button>
-        </form>
-    </div>
+        </div>
+        {% endfor %}
+        
+        <button type="submit" style="font-size: 18px; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            평가 완료하고 맞춤형 주식 추천받기
+        </button>
+    </form>
 </body>
 </html>
