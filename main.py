@@ -18,12 +18,14 @@ from news.interest_scorer import calculate_interest
 from news.style_inferrer import infer_style_from_news
 from news.db_manager import init_news_table, save_news, load_news, get_news_count
 
+
 # ★ feature_datacollector 브랜치에서 완성한 updater 엔진 임포트
 from data.updater import run_daily_updater
 
 # 실행 위치에 영향받지 않도록 절대 경로 설정 (data/stock_data.db)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data", "stock_data.db")
+
 
 
 def get_input_method() -> str:
@@ -40,13 +42,14 @@ def get_input_method() -> str:
 def main():
     print("\n=== OSS Personalized Stock ===\n")
 
+ 
     # ==========================================
     # 0. 데이터 자동 부분 최신화 가동
     # ==========================================
     # 프로그램이 켜지자마자 DB 날짜를 체크하고 누락된 주가 데이터를 FDR로 채워 넣습니다.
     run_daily_updater()
 
-    # 1. 입력 방식 선택 (동호 설계 흐름)
+    
     method = get_input_method()
 
     if method == "1":
@@ -73,6 +76,7 @@ def main():
 
         print("\n[ 뉴스 관심도 평가 ]")
         print("각 뉴스에 별점을 매겨주세요 (1~5점)\n")
+
 
         rated = []
         for i, n in enumerate(picked):
@@ -131,20 +135,20 @@ def main():
                 # 동호님 알고리즘에서 요구하는 ma_20(20일 이동평균선) 동적 생성
                 df['ma_20'] = df.groupby('ticker')['close'].transform(lambda x: x.rolling(window=20, min_periods=1).mean())
                 
-                print(f"✅ DB 로드 및 결합 완료: 총 {len(df)}건의 시계열 데이터를 기반으로 추천 알고리즘을 가동합니다.")
+                print(f" DB 로드 및 결합 완료: 총 {len(df)}건의 시계열 데이터를 기반으로 추천 알고리즘을 가동합니다.")
                 db_loaded = True
             else:
-                print("⚠️ CSV 파일에 name 또는 sector 컬럼이 없어 기존 CSV 데이터로 대체합니다.")
+                print(" CSV 파일에 name 또는 sector 컬럼이 없어 기존 CSV 데이터로 대체합니다.")
                 df = csv_stocks
 
         except Exception as e:
             import traceback
-            print(f"❌ DB 로드 실패 구체적 원인:")
+            print(f" DB 로드 실패 구체적 원인:")
             traceback.print_exc()
             print("안전지책으로 기존 CSV 데이터를 사용합니다.")
             df = pd.read_csv(os.path.join(BASE_DIR, "data", "stocks.csv"))
     else:
-        print("⚠️ DB 파일이 존재하지 않아 기본 CSV 데이터를 사용합니다.")
+        print("DB 파일이 존재하지 않아 기본 CSV 데이터를 사용합니다.")
         df = pd.read_csv(os.path.join(BASE_DIR, "data", "stocks.csv"))
 
     # ==========================================
@@ -175,7 +179,7 @@ def main():
         result = result.head(5)
 
     print("\n" + "="*80)
-    print(" 🎯 [추천 종목 Top 5] 투자 성향 맞춤 리스트")
+    print("  [추천 종목 Top 5] 투자 성향 맞춤 리스트")
     print("="*80)
     
     # 헤더 정렬 방식을 왼쪽 정렬(:<)로 통일하여 왜곡 방지
@@ -209,7 +213,7 @@ def main():
             print(f" [{i}]  | {ticker:<8} | {padded_name} | {padded_sector} | {per:<8} | {pbr:<7} | {score:<7}")
         print("="*80)
     else:
-        print(" ⚠️ 데이터 부족으로 추천 종목을 산출할 수 없습니다.")
+        print("  데이터 부족으로 추천 종목을 산출할 수 없습니다.")
         print("="*80)
         return
 
@@ -233,7 +237,7 @@ def main():
         train_with_feedback(style, sector)
         
     except IndexError:
-        print("⚠️ 추천 결과 셋의 인덱스를 참조할 수 없어 Q-learning 단계를 건너뜁니다.")
+        print("추천 결과 셋의 인덱스를 참조할 수 없어 Q-learning 단계를 건너뜁니다.")
 
 
 if __name__ == "__main__":
