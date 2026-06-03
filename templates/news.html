@@ -70,7 +70,7 @@
         .news-link { color: #3b82f6; text-decoration: none; font-weight: 600; }
         .submit-btn { display: block; width: 100%; font-size: 18px; font-weight: bold; padding: 18px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; margin-top: 40px; }
         
-        /* ⭐ 별점 UI 전용 CSS */
+        /* ⭐ 별점 UI 전용 CSS (버그 수정됨) */
         .rating-box { 
             background-color: #f8fafc; 
             padding: 15px 20px; 
@@ -84,7 +84,12 @@
         .star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; }
         .star-rating input { display: none; }
         .star-rating label { font-size: 28px; color: #cbd5e1; cursor: pointer; transition: color 0.2s; padding: 0 2px; }
-        .star-rating input:checked ~ label, 
+        
+        /* 1. 실제 선택(체크)된 별점 색상 칠하기 */
+        .star-rating input:checked ~ label { color: #fbbf24; }
+        /* 2. 별점 구역에 마우스가 올라가면 기존 색상을 임시로 지우기 (3점 고정 버그 해결!) */
+        .star-rating:hover label { color: #cbd5e1; }
+        /* 3. 마우스가 올라가 있는 별과 그 왼쪽 별들만 다시 칠하기 */
         .star-rating label:hover, 
         .star-rating label:hover ~ label { color: #fbbf24; }
 
@@ -137,7 +142,6 @@
         </form>
     </div>
 
-    <!-- ⭐ 시나리오 3: 주요 종목을 자동으로 찾아 형광펜을 그어주는 스크립트 -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             // 하이라이트할 핵심 주식 종목 이름들
