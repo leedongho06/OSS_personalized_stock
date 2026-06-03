@@ -59,3 +59,32 @@ def test_filter_by_style_growth_mode():
     
     assert len(result) == 2
     assert set(result['ticker']) == {'B', 'C'}
+import numpy as np
+
+def test_filter_by_style_default_mode():
+    """시나리오 5: 정의되지 않은 스타일 입력 시 기본 필터링(PER > 0) 확인"""
+    # PER: 10(A - 통과), -1(B - 탈락), 0(C - 탈락)
+    df = pd.DataFrame({
+        'ticker': ['A', 'B', 'C'],
+        'per': [10.0, -1.0, 0.0],
+        'pbr': [1.0, 1.0, 1.0]
+    })
+    
+    result = filter_by_style(df, "Neutral")
+    
+    assert len(result) == 1
+    assert result.iloc[0]['ticker'] == 'A'
+
+
+def test_filter_by_style_dropna():
+    """시나리오 6: 결측치(NaN) 데이터 제거 로직 확인"""
+    df = pd.DataFrame({
+        'ticker': ['A', 'B'],
+        'per': [10.0, np.nan], # B는 제거되어야 함
+        'pbr': [1.0, 1.0]
+    })
+    
+    result = filter_by_style(df, "Value")
+    
+    assert len(result) == 1
+    assert result.iloc[0]['ticker'] == 'A'
