@@ -31,3 +31,31 @@ def test_filter_by_style_assign_default_values():
     assert len(result) == 1
     assert result.iloc[0]['per'] == 15.0
     assert result.iloc[0]['pbr'] == 1.0
+def test_filter_by_style_value_mode():
+    """시나리오 3: 스타일이 'Value'일 때 PER가 0보다 크고 15 미만인 종목만 잘 골라내는지 테스트"""
+    # PER: 5(A - 통과), 20(B - 탈락), -3(C - 탈락)
+    df = pd.DataFrame({
+        'ticker': ['A', 'B', 'C'],
+        'per': [5.0, 20.0, -3.0],
+        'pbr': [1.0, 1.0, 1.0]
+    })
+    
+    result = filter_by_style(df, "Value")
+    
+    assert len(result) == 1
+    assert result.iloc[0]['ticker'] == 'A'
+
+
+def test_filter_by_style_growth_mode():
+    """시나리오 4: 스타일이 'Growth'일 때 PER가 15 이상인 종목만 잘 골라내는지 테스트"""
+    # PER: 10(A - 탈락), 15(B - 통과), 25(C - 통과)
+    df = pd.DataFrame({
+        'ticker': ['A', 'B', 'C'],
+        'per': [10.0, 15.0, 25.0],
+        'pbr': [1.0, 1.0, 1.0]
+    })
+    
+    result = filter_by_style(df, "Growth")
+    
+    assert len(result) == 2
+    assert set(result['ticker']) == {'B', 'C'}
