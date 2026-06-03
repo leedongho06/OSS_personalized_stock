@@ -24,6 +24,7 @@ def init_news_table():
     conn.close()
 
 
+
 def save_news(news_list: list):
     """뉴스 리스트 DB 저장 (중복 제외)."""
     conn = sqlite3.connect(DB_PATH)
@@ -89,6 +90,7 @@ def get_news_count() -> int:
         count = 0
     conn.close()
     return count
+
 
 
 def init_trade_table():

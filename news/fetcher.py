@@ -36,3 +36,4 @@ if __name__ == "__main__":
     news_list = fetch_all_news()
     for n in news_list:
         print(n['title'])
+

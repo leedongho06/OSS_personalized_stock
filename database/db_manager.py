@@ -1,61 +1,77 @@
+import os
 import sqlite3
 import pandas as pd
 
-DB_PATH = 'stock_data.db'
+# main.py 또는 updater.py와 경로를 맞추기 위해 절대 경로 설정
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(BASE_DIR, "data", "stock_data.db")
+TABLE_NAME = "daily_prices"
 
-# 1. 종목 기본 정보 저장
-def insert_stock(ticker, name):
+
+def init_db():
+    """
+    [초기화] DB 파일을 체크하고, per와 pbr 컬럼이 포함된 daily_prices 테이블을 생성합니다.
+    """
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('INSERT OR IGNORE INTO stocks (ticker, name) VALUES (?, ?)', (ticker, name))
+    
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+            date TEXT,
+            open REAL,
+            high REAL,
+            low REAL,
+            close REAL,
+            volume INTEGER,
+            dividends REAL,
+            stock_splits REAL,
+            ticker TEXT,
+            per REAL,
+            pbr REAL,
+            PRIMARY KEY (date, ticker)
+        )
+    """)
     conn.commit()
     conn.close()
 
-# 2. 모든 종목 조회
-def get_all_stocks():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM stocks')
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
 
-# 3. 일별 주가 데이터 저장
-def save_daily_data(ticker, df):
+def save_daily_data(ticker_code, df: pd.DataFrame):
+    """
+    [저장 모듈] 전처리 및 유효성 검사가 완료된 데이터프레임을 DB에 적재합니다.
+    INSERT OR REPLACE 방식을 도입하여 UNIQUE constraint (PK) 충돌을 원천 차단합니다.
+    """
+    init_db()
+    
     if df.empty:
         return
+
     conn = sqlite3.connect(DB_PATH)
-    df.columns = [col.lower() for col in df.columns]
-    df['ticker'] = ticker
+    cursor = conn.cursor()
+    
     try:
-        df.to_sql('daily_prices', conn, if_exists='append', index=False)
-        print(f"[{ticker}] 저장 성공!")
+        required_columns = ['date', 'open', 'high', 'low', 'close', 'volume', 'dividends', 'stock_splits', 'ticker', 'per', 'pbr']
+        
+        for col in required_columns:
+            if col not in df.columns:
+                df[col] = 0.0 if col != 'date' and col != 'ticker' else ""
+
+        final_df = df[required_columns].copy()
+        
+        data_tuples = [tuple(x) for x in final_df.to_numpy()]
+        
+        query = f"""
+            INSERT OR REPLACE INTO {TABLE_NAME} 
+            (date, open, high, low, close, volume, dividends, stock_splits, ticker, per, pbr)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        
+        cursor.executemany(query, data_tuples)
+        conn.commit()
+        
     except Exception as e:
-        print(f"저장 실패: {e}")
+        print(f"[DB Error] {ticker_code} 데이터 저장 실패: {e}")
+        conn.rollback()
     finally:
         conn.close()
-
-# 4. 일별 주가 데이터 조회
-def get_daily_prices(ticker):
-    conn = sqlite3.connect(DB_PATH)
-    query = f"SELECT * FROM daily_prices WHERE ticker = '{ticker}' ORDER BY date ASC"
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-# 5. [추가됨] 사용자 투자 성향 저장
-def insert_user(user_id, username, investment_type):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('INSERT OR REPLACE INTO users (user_id, username, investment_type) VALUES (?, ?, ?)', (user_id, username, investment_type))
-    conn.commit()
-    conn.close()
-
-# 6. [추가됨] 사용자 정보 조회
-def get_user(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
-    row = cursor.fetchone()
-    conn.close()
-    return row

@@ -1,118 +1,129 @@
 import os
 import sys
 import time
+import random
 import sqlite3
 import pandas as pd
-from datetime import datetime, timedelta
 import FinanceDataReader as fdr
+from datetime import datetime, timedelta
 
 # 상위 폴더의 모듈들을 불러오기 위한 경로 설정
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data.preprocessor import preprocess_stock_data
 from data.validator import validate_stock_data
-from database.db_manager import save_daily_data  # 팀원 A2가 만든 저장 모듈 (이름은 실제에 맞게 수정 필요)
+from database.db_manager import save_daily_data, DB_PATH, TABLE_NAME
 
-# 관심 기업 목록
+# 100개 핵심 기업 종목코드 맵
 TICKER_MAP = {
-    "삼성전자": "005930", "SK하이닉스": "000660",
-    "카카오": "035720", "NAVER": "035420",
+    "삼성전자": "005930", "SK하이닉스": "000660", "POSCO홀딩스": "005490", "현대차": "005380",
+    "기아": "000270", "NAVER": "035420", "LG화학": "051910", "삼성SDI": "006400",
+    "카카오": "035720", "셀트리온": "068270", "LG": "003550", "삼성물산": "028260",
+    "현대모비스": "012330", "SK이노베이션": "096770", "SK텔레콤": "017670", "KT": "030200",
     "신한지주": "055550", "KB금융": "105560", "하나금융지주": "086790", "우리금융지주": "316140",
-    "셀트리온": "068270", "삼성바이오로직스": "207940",
-    "현대차": "005380", "기아": "000270", "두산": "000150", "HD현대": "267250",
-    "한국전력": "015760", "SK텔레콤": "017670", "KT": "030200", "LG유플러스": "032640",
-    "LG화학": "051910", "롯데케미칼": "011170",
-    "CJ제일제당": "097950", "농심": "004370", "오리온": "271560",
-    "롯데쇼핑": "023530", "이마트": "139480"
+    "삼성생명": "032830", "삼성전기": "009150", "삼성에스디에스": "018260", "SK": "034730",
+    "HMM": "011200", "고려아연": "010130", "넷마블": "251270", "포스코인터내셔널": "047050",
+    "LG전자": "066570", "한화솔루션": "009830", "대한항공": "003490", "아모레퍼시픽": "090430",
+    "S-Oil": "010950", "한국타이어앤테크놀로지": "161390", "삼성화재": "000810", "기업은행": "024110",
+    "이마트": "139480", "LG이노텍": "011070", "CJ제일제당": "097950", "CJ": "001040",
+    "코웨이": "021240", "SK스퀘어": "402340", "GS": "078930", "유한양행": "000100",
+    "한화생명": "088350", "한국금융지주": "071050", "호텔신라": "008770", "한온시스템": "018880",
+    "금호석유": "011780", "한미반도체": "042700", "현대건설": "000720", "한화시스템": "272210",
+    "포스코퓨처엠": "003670", "SK바이오팜": "326030", "삼성바이오로직스": "207940", "한미약품": "128940",
+    "엔씨소프트": "036570", "위메이드": "112040", "펄어비스": "263750", "JYP Ent.": "035900",
+    "에스엠": "041510", "미래에셋증권": "006800", "삼성증권": "016360", "삼성카드": "029780",
+    "한진칼": "180640", "하이트진로": "000080", "GS리테일": "007070", "현대제철": "004020",
+    "OCI홀딩스": "010060", "코스모화학": "005070", "영풍": "000670", "현대해상": "001450",
+    "대동": "000490", "LS": "006260", "삼화콘덴서": "001820", "DB손해보험": "005830",
+    "아모레G": "002790", "롯데케미칼": "004000", "롯데케미칼우": "011170", "롯데쇼핑": "023530",
+    "롯데지주": "004990", "KT&G": "033780", "대림산업": "000210", "한국항공우주": "047810",
+    "HD한국조선해양": "009540", "삼성중공업": "010140", "한화오션": "042660", "HD현대": "267250",
+    "HD현대중공업": "329180", "한국전력": "015760", "한국가스공사": "036460", "STX중공업": "071970",
+    "한국전력우": "011155", "두산": "000150", "두산에너빌리티": "034020", "두산밥캣": "241560",
+    "하이브": "352820", "태광산업": "003240", "한미사이언스": "008930", "휴젤": "145020"
 }
 
-DB_PATH = "database/stock_data.db"  # A2님이 설정한 DB 파일 경로
-
-def get_latest_date_from_db(ticker_code):
-    """
-    [조회 로직] DB를 확인하여 해당 종목의 가장 마지막 데이터 날짜를 가져옵니다.
-    """
+def get_latest_date_in_db() -> str:
+    """DB에 저장되어 있는 가장 최신 데이터의 날짜를 yyyy-mm-dd 형식으로 반환합니다."""
     if not os.path.exists(DB_PATH):
-        return None
-        
+        return ""
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        # daily_data 테이블에서 해당 종목의 가장 최근 날짜(MAX) 조회
-        query = f"SELECT MAX(date) FROM daily_data WHERE ticker = '{ticker_code}'"
-        cursor.execute(query)
-        result = cursor.fetchone()
+        cursor.execute(f"SELECT MAX(date) FROM {TABLE_NAME}")
+        row = cursor.fetchone()
         conn.close()
-        
-        if result and result[0]:
-            return result[0]  # 예: '2026-05-19'
+        return row[0] if row and row[0] else ""
+    except Exception:
+        return ""
+
+def fetch_stock_data(ticker, start_date, end_date):
+    """지정한 범위의 주가 데이터를 FDR을 통해 수집합니다."""
+    try:
+        df = fdr.DataReader(ticker, start_date, end_date)
+        return df
     except Exception as e:
-        print(f"[Warning] DB에서 {ticker_code} 날짜 조회 실패: {e}")
-        
-    return None
+        print(f"   [API 에러] {ticker} 수집 실패: {e}")
+        return pd.DataFrame()
 
 def run_daily_updater():
-    """
-    [갱신 파이프라인] 비어있는 날짜를 계산하고, 수집-전처리-검증-저장 과정을 지휘합니다.
-    """
-    print("=== [Updater] 주식 데이터 최신화 파이프라인 가동 ===")
+    """날짜를 체크하여 누락된 데이터만 스마트하게 스마트 갱신하는 코어 파이프라인"""
+    print("\n[Data Engine] 로컬 자산 레포지토리 날짜 검증 중...")
+    
+    latest_db_date = get_latest_date_in_db()
     today_str = datetime.now().strftime('%Y-%m-%d')
     
-    for name, code in TICKER_MAP.items():
-        print(f"\n>>> [{name} ({code})] 업데이트 확인 중...")
+    # 1. 기저 데이터가 아예 없는 경우 -> 최초 1회 전체 빌드 (최근 30일치)
+    if not latest_db_date:
+        print("   -> 💡 로컬 DB가 비어있습니다. 최초 1회 초기 전체 빌드를 시작합니다 (30일 분량).")
+        start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    else:
+        # 2. 날짜가 동일한 경우 -> 장 마감 전이거나 오늘 이미 업데이트 완료됨 (스킵)
+        if latest_db_date == today_str:
+            print(f"   -> ✅ 데이터가 최신 상태입니다 (최신 기록일: {latest_db_date}). 동적 업데이트를 스킵합니다.")
+            return
         
-        # 1. DB에서 마지막 저장 날짜 확인
-        last_date_str = get_latest_date_from_db(code)
+        # 3. 날짜가 다른 경우 -> 마지막 저장일 다음 날부터 오늘까지 수집 범위 최적화
+        last_dt = datetime.strptime(latest_db_date, '%Y-%m-%d')
+        start_date = (last_dt + timedelta(days=1)).strftime('%Y-%m-%d')
         
-        if last_date_str:
-            # 마지막 날짜 '다음 날'부터 수집 시작
-            last_date = datetime.strptime(last_date_str, '%Y-%m-%d')
-            start_date = (last_date + timedelta(days=1)).strftime('%Y-%m-%d')
-            
-            # 만약 DB 날짜가 오늘보다 크거나 같으면 수집 건너뜀 (이미 최신)
-            if start_date > today_str:
-                print("    [통과] 이미 최신화되어 있습니다.")
-                continue
-        else:
-            # DB에 종목 자체가 없으면 최근 1년(365일) 데이터 초기 수집
-            print("    [Info] DB에 기존 데이터 없음. 최근 1년 치 수집 진행.")
-            start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+        # 만약 금요일 장 마감 후 주말(토/일) 동안 실행하는 것이라면, start_date가 오늘보다 미래일 수 있으므로 안전 가드
+        if start_date > today_str:
+            print(f"   -> ✅ 영업일 기준 최신 상태입니다. (최신 기록일: {latest_db_date}).")
+            return
 
-        print(f"    [수집] {start_date} ~ {today_str} 데이터 요청...")
-        
+        print(f"   -> 🔄 날짜 바뀜 감지! 업데이트 범위: [{start_date}] ~ [{today_str}]")
+
+    total_stocks = len(TICKER_MAP)
+    print(f"--- 총 {total_stocks}개 우량 기업 증분 데이터 적재 가동 ---")
+    
+    for i, (name, code) in enumerate(TICKER_MAP.items(), start=1):
         try:
-            # 2. FDR 데이터 수집
-            df = fdr.DataReader(code, start_date, today_str)
+            df = fetch_stock_data(code, start_date=start_date, end_date=today_str)
             
             if df.empty:
-                print(f"    [스킵] 휴장일이거나 해당 기간의 수집 데이터가 없습니다.")
                 continue
                 
-            # 3. 전처리 (날짜 꺼내기 포함)
             df = df.reset_index()
-            
-            # ★ 핵심: FDR 결과에는 종목코드(ticker)가 없으므로 DB 저장을 위해 명시적으로 추가
-            df['ticker'] = code 
-            
             clean_df = preprocess_stock_data(df)
             
-            # 4. 유효성 검사 (품질 검증)
+            if clean_df.empty:
+                continue
+            
             is_ok, msg = validate_stock_data(clean_df, name)
             if not is_ok:
-                print(f"    [검증 탈락] {msg}")
                 continue
                 
-            # 5. DB 갱신 (저장)
             save_daily_data(code, clean_df)
-            print(f"    [완료] {len(clean_df)}일 치 영업일 데이터 갱신 성공!")
+            print(f"   [{i}/{total_stocks}] [{name}] 증분 데이터 적재 완료 (+{len(clean_df)}일)")
             
-            # 서버 차단 방지를 위한 매너 타임
-            time.sleep(0.2)
+            # 네트워크 부하 방지 무작위 딜레이 (0.3 ~ 0.8초로 갱신 시에는 소폭 단축)
+            time.sleep(random.uniform(0.3, 0.8))
             
         except Exception as e:
-            print(f"    [에러 발생] {name} 갱신 중 실패: {e}")
+            print(f"   [오류] {name}: {e}")
 
-    print("\n=== 모든 종목 최신화 작업 완료! ===")
+    print("--- 로컬 증분 데이터베이스 최신화 완료 ---")
 
 if __name__ == "__main__":
     run_daily_updater()

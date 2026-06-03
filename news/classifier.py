@@ -1,4 +1,3 @@
-
 import os
 import google.generativeai as genai
 
@@ -74,10 +73,12 @@ def add_sector_to_news(news_list: list) -> list:
 
         sector = classify_sector(title, description)
         
+
         result.append({
             "title": title,
             "description": description,
             "sector": sector,
             "link": news.get("link", ""),
+
         })
     return result
