@@ -91,3 +91,23 @@ def test_infer_style_fallback():
     # 임시로 수치를 조작하거나 코드 커버리지 툴이 정상 인지하게끔 유도합니다.
     # (실제로는 모든 점수가 STYLE_MAP에 걸리므로 이 테스트는 필수 흐름 확증용입니다.)
     pass
+
+
+# ==============================================================================
+# 3. print_analysis() 함수 테스트 (출력 도중 에러가 나지 않는지 검증)
+# ==============================================================================
+
+def test_print_analysis(capsys):
+    """화면 인쇄 함수가 예외 없이 정상 출력되는지 테스트"""
+    sample_analyses = [
+        {"name": "삼성전자", "sector": "IT", "volatility": "중", "score": 3}
+    ]
+    
+    # 함수 실행 (에러 없이 굴러가는지 확인)
+    print_analysis("공격형", 7, sample_analyses)
+    
+    # 터미널에 프린트된 내용 잡아내기
+    captured = capsys.readouterr()
+    assert "[ 선호 기업 분석 결과 ]" in captured.out
+    assert "삼성전자" in captured.out
+    assert "추론된 투자 성향: 공격형" in captured.out
