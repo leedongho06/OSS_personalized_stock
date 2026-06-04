@@ -15,3 +15,10 @@ def test_encode_invalid_input():
         encode_state("슈퍼공격형", "IT")  # 잘못된 스타일
     with pytest.raises(ValueError):
         encode_state("안정형", "우주항공") # 잘못된 섹터
+from q_learning.state_encoder import get_all_states
+
+def test_get_all_states_count():
+    """전체 상태 공간이 27개로 정확히 생성되는지 전수 검증"""
+    states = get_all_states()
+    assert len(states) == 27
+    assert "공격형_임의소비재" in states
