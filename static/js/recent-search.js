@@ -29,4 +29,9 @@
         render();
     }
 
+    function clearAll() {
+        localStorage.removeItem(STORAGE_KEY);
+        render();
+    }
+
 })();
