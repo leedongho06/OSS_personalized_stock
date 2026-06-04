@@ -22,4 +22,11 @@
         render();
     }
 
+    function remove(index) {
+        const list = load();
+        list.splice(index, 1);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        render();
+    }
+
 })();
