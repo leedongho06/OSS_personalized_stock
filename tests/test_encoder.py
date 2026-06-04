@@ -9,3 +9,9 @@ def test_encode_decode_integrity():
     
     assert decoded_style == style
     assert decoded_sector == sector
+def test_encode_invalid_input():
+    """정의되지 않은 style이나 sector 입력 시 ValueError 예외 처리 검증"""
+    with pytest.raises(ValueError):
+        encode_state("슈퍼공격형", "IT")  # 잘못된 스타일
+    with pytest.raises(ValueError):
+        encode_state("안정형", "우주항공") # 잘못된 섹터
