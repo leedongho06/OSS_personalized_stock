@@ -55,9 +55,54 @@
                     뉴스 평가 시작하기
                 </a>
             </div>
+
+            <div class="card">
+                <h2>🎯 투자 성향 직접 선택</h2>
+                <p>나의 투자 성향을 알고 있다면<br>바로 선택해서 추천받으세요</p>
+                <form action="/recommend/direct" method="POST">
+                    <div class="style-select-group">
+                        <label class="style-option">
+                            <input type="radio" name="style" value="안정형" required>
+                            <span class="style-option-box">
+                                <span class="style-icon">🛡️</span>
+                                <span class="style-name">안정형</span>
+                                <span class="style-desc">낮은 PER·PBR<br>안정적 수익 추구</span>
+                            </span>
+                        </label>
+                        <label class="style-option">
+                            <input type="radio" name="style" value="중립형">
+                            <span class="style-option-box">
+                                <span class="style-icon">⚖️</span>
+                                <span class="style-name">중립형</span>
+                                <span class="style-desc">균형 잡힌<br>포트폴리오</span>
+                            </span>
+                        </label>
+                        <label class="style-option">
+                            <input type="radio" name="style" value="공격형">
+                            <span class="style-option-box">
+                                <span class="style-icon">🚀</span>
+                                <span class="style-name">공격형</span>
+                                <span class="style-desc">높은 성장 기대<br>고수익 추구</span>
+                            </span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="direct-submit" disabled>
+                        바로 추천받기
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/autocomplete.js') }}" defer></script>
+    <script>
+        document.querySelectorAll('input[name="style"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.querySelectorAll('.style-option-box').forEach(box => box.classList.remove('selected'));
+                radio.closest('.style-option').querySelector('.style-option-box').classList.add('selected');
+                document.getElementById('direct-submit').disabled = false;
+            });
+        });
+    </script>
 </body>
 </html>
