@@ -411,6 +411,7 @@
 
     window.clearTagsAll    = clearTagsAll;
     window.handleFieldClick = handleFieldClick;
+    window.addTag = addTag;
 
     render();
 
