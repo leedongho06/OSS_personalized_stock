@@ -485,3 +485,9 @@ header p { color: #718096; }
     color: #a0aec0;
     font-size:0.95rem;
 }
+
+.style-select-group {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1.2rem;
+}

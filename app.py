@@ -105,11 +105,11 @@ def rate_news():
         final=final,
     )
 
-@app.route("recommend/direct", methods=["POST"])
+@app.route("/recommend/direct", methods=["POST"])
 def recommend_direct():
     style = request.form.get("style", "중립형")
     session["style"] = style
-    session{"sector"] = "IT"
+    session["sector"] = "IT"
 
     df = pd.read.csv("data/stocks.csv")
     filtered = filter_by_style(df, style)
@@ -123,10 +123,10 @@ def recommend_direct():
     q_table = load_q_table()
     state = encode_state(style, sector)
     action = choose_action(q_table, state)
-    final result.iloc[action % len(result)]["name"]
+    final = result.iloc[action % len(result)]["name"]
 
     return render_template(
-    "result.html"
+    "result.html",
     style=style,
     result=result.to_dict(orient="record"),
     final=final,
