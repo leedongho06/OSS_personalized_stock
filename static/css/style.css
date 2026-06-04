@@ -491,3 +491,12 @@ header p { color: #718096; }
     gap: 0.6rem;
     margin-bottom: 1.2rem;
 }
+
+.style-option {
+    flex: 1;
+    cursor: pointer;
+}
+
+.style-option input[type="radio"] {
+    display: none;
+}
