@@ -14,3 +14,16 @@
     font-weight: 600;
     color: #a0aec0;
 }
+
+.recent-clear-all {
+    font-size: 0.72rem;
+    color: #b0bec5;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s;
+}
+
+.recent-clear-all:hover { color: #718096; }
