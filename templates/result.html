@@ -56,6 +56,18 @@
         </div>
 
         <div class="card">
+            <h2>📊 종목 지표 비교</h2>
+            <div class="compare-tabs">
+                <button class="compare-tab active" data-metric="per">PER 비교</button>
+                <button class="compare-tab" data-metric="pbr">PBR 비교</button>
+                <button class="compare-tab" data-metric="score">유사도 비교</button>
+            </div>
+            <div class="compare-chart-wrap">
+                <canvas id="compareChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
             <h2>💬 추천 결과 평가</h2>
             <p>추천 결과가 만족스러우셨나요?</p>
             <form action="/feedback" method="POST">
@@ -78,5 +90,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="/static/js/radar.js"></script>
+    <script>
+        const STOCK_DATA = {{ result | tojson }};
+    </script>
+    <script src="/static/js/compare.js"></script>
 </body>
 </html>
