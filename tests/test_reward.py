@@ -20,3 +20,12 @@ def test_get_feedback_invalid_then_valid():
     # input()이 첫 번째 호출엔 "6", 두 번째 호출엔 "2"를 반환하도록 시뮬레이션
     with patch('builtins.input', side_effect=["6", "2"]):
         assert get_feedback() == 2
+from q_learning.reward import process_feedback
+
+def test_process_feedback_integration():
+    """get_feedback과 normalize_reward가 연동되어 최종 (점수, 보상) 튜플을 잘 반환하는지 검증"""
+    # get_feedback 함수가 무조건 4점을 반환하도록 고정(Mocking)
+    with patch('q_learning.reward.get_feedback', return_value=4):
+        score, reward = process_feedback()
+        assert score == 4
+        assert reward == 0.5  # 4점일 때 보상은 0.5여야 함
