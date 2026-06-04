@@ -58,12 +58,15 @@
         <div class="card">
             <h2>📊 종목 지표 비교</h2>
             <div class="compare-tabs">
-                <button class="compare-tab active" data-metric="per">PER 비교</button>
-                <button class="compare-tab" data-metric="pbr">PBR 비교</button>
-                <button class="compare-tab" data-metric="score">유사도 비교</button>
+                <button class="compare-tab active" data-metric="per">PER</button>
+                <button class="compare-tab" data-metric="pbr">PBR</button>
+                <button class="compare-tab" data-metric="score">유사도</button>
             </div>
             <div class="compare-chart-wrap">
                 <canvas id="compareChart"></canvas>
+                <div id="compareNoData" class="compare-no-data" style="display:none">
+                    데이터가 없습니다
+                </div>
             </div>
         </div>
 
