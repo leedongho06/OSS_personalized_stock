@@ -466,3 +466,13 @@ header p { color: #718096; }
     border-color: #3182ce;
     color: #fff;
 }
+
+.compare-chart-wrap {
+    position: relative;
+    height: 260px;
+}
+
+.compare-chart-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
