@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>맞춤형 주식 추천 시스템</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/recent-search.css') }}">
 </head>
 <body>
     <div class="container">
@@ -46,6 +47,8 @@
                         종목 추천받기
                     </button>
                 </form>
+
+                <div id="recent-searches" class="recent-wrap"></div>
             </div>
 
             <div class="card">
@@ -95,6 +98,7 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/autocomplete.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/recent-search.js') }}" defer></script>
     <script>
         document.querySelectorAll('input[name="style"]').forEach(radio => {
             radio.addEventListener('change', () => {
