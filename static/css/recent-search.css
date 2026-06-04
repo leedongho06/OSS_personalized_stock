@@ -1,0 +1,16 @@
+.recent-wrap {
+    margin-top: 1rem;
+}
+
+.recent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.recent-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #a0aec0;
+}
