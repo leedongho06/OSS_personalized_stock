@@ -17,3 +17,12 @@ def test_choose_action_exploration():
         # EPSILON(0.2)보다 작으므로 random.choice 실행
         action = choose_action(q_table, 'state1')
         assert action in [0, 1]
+from q_learning.agent import update_q_value
+
+def test_update_q_value():
+    q_table = {'state1': {'0': 0.5}, 'next_state': {'0': 0.6}}
+    # 공식: 0.5 + 0.1 * (reward(1.0) + 0.9 * 0.6 - 0.5)
+    # = 0.5 + 0.1 * (1.0 + 0.54 - 0.5) = 0.5 + 0.1 * 1.04 = 0.604
+    updated_table = update_q_value(q_table, 'state1', 0, 1.0, 'next_state')
+    
+    assert updated_table['state1']['0'] == 0.604
