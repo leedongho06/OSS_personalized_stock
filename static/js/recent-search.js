@@ -12,5 +12,14 @@
             return [];
         }
     }
+    
+    function save(companies) {
+        let list = load();
+        const key = [...companies].sort().join(',');
+        list = list.filter(item => [...item].sort().join(',') !== key);
+        list.unshift(companies);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, MAX_ITEMS)));
+        render();
+    }
 
 })();
