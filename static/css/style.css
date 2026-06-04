@@ -526,3 +526,15 @@ header p { color: #718096; }
 .style-icon {
     font-size: 1.5rem;
 }
+
+.style-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.style-desc {
+    font-size: 0.72rem;
+    color: #718096;
+    line-height: 1.4;
+}
