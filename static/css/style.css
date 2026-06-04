@@ -455,3 +455,14 @@ header p { color: #718096; }
     cursor: pointer;
     transition: all 0.2s;
 }
+
+.compare-tab:hover {
+    border-color: #3182ce;
+    color: #3182ce;
+}
+
+.compare-tab:active {
+    background: #3182ce;
+    border-color: #3182ce;
+    color: #fff;
+}
