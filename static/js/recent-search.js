@@ -34,4 +34,9 @@
         render();
     }
 
+    function apply(companies) {
+        window.clearTagsAll?.();
+        companies.forEach(c => window.addTag?.(c));
+    }
+
 })();
