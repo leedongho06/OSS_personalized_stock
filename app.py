@@ -57,6 +57,34 @@ def recommend_by_company():
     )
 
 
+@app.route("/recommend/direct", methods=["POST"])
+def recommend_direct():
+    style = request.form.get("style", "중립형")
+    session["style"] = style
+    session["sector"] = "IT"
+
+    df = pd.read_csv("data/stocks.csv")
+    filtered = filter_by_style(df, style)
+    if filtered.empty:
+        filtered = df
+
+    result = recommend(filtered, style, top_n=5)
+    sector = result.iloc[0]["sector"]
+    session["sector"] = sector
+
+    q_table = load_q_table()
+    state = encode_state(style, sector)
+    action = choose_action(q_table, state)
+    final = result.iloc[action % len(result)]["name"]
+
+    return render_template(
+        "result.html",
+        style=style,
+        result=result.to_dict(orient="records"),
+        final=final,
+    )
+
+
 @app.route("/news")
 def news_page():
     init_news_table()
@@ -105,32 +133,6 @@ def rate_news():
         final=final,
     )
 
-@app.route("/recommend/direct", methods=["POST"])
-def recommend_direct():
-    style = request.form.get("style", "중립형")
-    session["style"] = style
-    session["sector"] = "IT"
-
-    df = pd.read.csv("data/stocks.csv")
-    filtered = filter_by_style(df, style)
-    if filtered.empty:
-        filtered = df
-
-    result = recommend(filtered, style, top_n=5)
-    sector = result.iloc[0]["sector"]
-    session["sector"] = sector
-
-    q_table = load_q_table()
-    state = encode_state(style, sector)
-    action = choose_action(q_table, state)
-    final = result.iloc[action % len(result)]["name"]
-
-    return render_template(
-    "result.html",
-    style=style,
-    result=result.to_dict(orient="record"),
-    final=final,
-    )
 
 @app.route("/feedback", methods=["POST"])
 def feedback():
