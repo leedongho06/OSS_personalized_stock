@@ -513,3 +513,16 @@ header p { color: #718096; }
     transition: all 0.2s;
     background: #fff;
 }
+
+.style-option-box:hover {
+    border-color: #3182ce;
+}
+
+.style-option-box.selected {
+    border-color: #3182ce;
+    background: #ebf4ff;
+}
+
+.style-icon {
+    font-size: 1.5rem;
+}
