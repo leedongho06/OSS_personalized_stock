@@ -538,3 +538,13 @@ header p { color: #718096; }
     color: #718096;
     line-height: 1.4;
 }
+
+.card-combined {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    grid-column 1 / -1;
+    margin-bottom = 0;
+}
