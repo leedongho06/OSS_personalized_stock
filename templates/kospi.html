@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>코스피 TOP 10</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}코스피 TOP 10{% endblock %}
+
+{% block content %}
     <div class="container">
         <header>
             <h1>📊 코스피 TOP 10</h1>
@@ -68,10 +64,10 @@
             </p>
             {% endif %}
         </div>
-
-        <a href="/" class="btn btn-secondary">메인으로</a>
     </div>
+{% endblock %}
 
+{% block extra_js %}
     <script>
     document.querySelectorAll('.heatmap-cell').forEach(cell => {
         const rate = Math.abs(parseFloat(cell.dataset.rate));
@@ -97,5 +93,4 @@
         cell.style.color = color;
     });
     </script>
-</body>
-</html>
+{% endblock %}

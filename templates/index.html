@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>맞춤형 주식 추천 시스템</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% extends "base.html" %}
+
+{% block title %}맞춤형 주식 추천 시스템{% endblock %}
+
+{% block extra_css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/recent-search.css') }}">
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     <div class="container">
         <header>
             <h1>맞춤형 주식 추천 시스템</h1>
@@ -121,7 +120,9 @@
         </div>
 
     </div>
+{% endblock %}
 
+{% block extra_js %}
     <script src="{{ url_for('static', filename='js/autocomplete.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/recent-search.js') }}" defer></script>
     <script>
@@ -133,5 +134,4 @@
             });
         });
     </script>
-</body>
-</html>
+{% endblock %}
