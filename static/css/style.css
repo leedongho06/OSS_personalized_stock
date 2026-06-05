@@ -756,3 +756,11 @@ select.input-field {
     font-size: 0.88rem;
     font-weight: 700;
 }
+
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
