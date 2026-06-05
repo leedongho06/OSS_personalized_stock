@@ -50,7 +50,7 @@ class TestStockPipeline(unittest.TestCase):
         conn.close()
 
         # 검증 시작
-        latest_date = data.updater.get_latest_date_in_db(ticker)
+        latest_date = data.updater.get_latest_date_in_db()
         self.assertEqual(latest_date, past_date)
         
         raw_df = fetch_stock_data(ticker, days=10) 
