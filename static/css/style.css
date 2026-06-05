@@ -238,7 +238,9 @@ header p { color: #718096; }
     border-radius: 10px;
     box-shadow: 0 8px 28px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
     z-index: 200;
-    overflow: hidden;
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: hidden;
     animation: dropIn .13s ease-out;
 }
 
@@ -544,7 +546,6 @@ header p { color: #718096; }
     flex-direction: row;
     gap: 0;
     padding: 0;
-    overflow: hidden;
     margin-bottom = 1.5rem;
 }
 
