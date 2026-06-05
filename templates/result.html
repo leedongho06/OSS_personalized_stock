@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>추천 결과</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/radar.css"> 
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}추천 결과{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/radar.css') }}">
+{% endblock %}
+
+{% block content %}
     <div class="container" id="resultContainer" data-style="{{ style }}">
         <header>
             <h1>📊 추천 결과</h1>
@@ -69,7 +68,7 @@
                 </div>
             </div>
         </div>
-      
+
         <div class="card">
             <h2>📒 매매일지에 기록하기</h2>
             <p>추천 종목을 매수했다면 매매일지에 기록하고 만족도를 남겨주세요</p>
@@ -78,12 +77,13 @@
 
         <a href="/" class="btn btn-secondary">처음으로 돌아가기</a>
     </div>
+{% endblock %}
 
+{% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="/static/js/radar.js"></script>
     <script>
         const STOCK_DATA = {{ result | tojson }};
     </script>
     <script src="/static/js/compare.js"></script>
-</body>
-</html>
+{% endblock %}
