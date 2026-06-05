@@ -1,6 +1,8 @@
 import pytest
 import pandas as pd
 import sqlite3
+from recommendation.data_loader import load_data_from_db as rec_load_data
+from recommendation.data_loader import load_feedback_data
 
 # 모든 모듈 임포트
 from recommendation.validator import DataValidator
@@ -94,3 +96,80 @@ def test_recommend_empty_df():
     """빈 데이터프레임이 들어왔을 때 에러 없이 빈 결과를 반환하는지 테스트"""
     result = recommend(pd.DataFrame(), "공격형")
     assert result.empty
+
+
+
+def test_rec_load_data_no_db():
+    """DB 없을 때 빈 DataFrame 반환 확인"""
+    df = rec_load_data("non_existent.db")
+    assert df.empty
+
+
+def test_rec_load_feedback_no_db():
+    """피드백 DB 없을 때 빈 DataFrame 반환 확인"""
+    df = load_feedback_data("non_existent.db")
+    assert df.empty
+
+
+def test_rec_load_data_success_mock(monkeypatch):
+    """정상 데이터 로드 mock 테스트"""
+    import pandas as pd
+    import sqlite3
+
+    sample_df = pd.DataFrame({
+        'ticker': ['005930'], 'name': ['삼성전자'], 'sector': ['IT'],
+        'per': [15.0], 'pbr': [1.0], 'ma_20': [70000.0], 'volume': [1000000]
+    })
+
+    monkeypatch.setattr(pd, "read_sql_query", lambda q, c: sample_df)
+    df = rec_load_data("data/stock_data.db")
+    assert not df.empty
+    assert df.iloc[0]['ticker'] == '005930'
+
+def test_rec_load_feedback_success_mock(monkeypatch):
+    """피드백 데이터 정상 로드 mock 테스트"""
+    import pandas as pd
+    import sqlite3
+
+    sample_df = pd.DataFrame({
+        "user_id": ["user1"],
+        "ticker": ["005930"],
+        "preference": ["IT"],
+        "reason": ["성장성"]
+    })
+
+    monkeypatch.setattr(pd, "read_sql_query", lambda q, c: sample_df)
+    df = load_feedback_data("data/stock_data.db")
+    assert not df.empty
+
+
+def test_rec_load_feedback_exception(monkeypatch):
+    """피드백 로드 예외 발생 시 빈 DataFrame 반환 확인"""
+    import sqlite3
+    monkeypatch.setattr(sqlite3, "connect", lambda x: (_ for _ in ()).throw(Exception("DB 오류")))
+    df = load_feedback_data("data/stock_data.db")
+    assert df.empty
+
+def test_rec_load_feedback_success_mock(monkeypatch):
+    """피드백 데이터 정상 로드 mock 테스트"""
+    import pandas as pd
+    import sqlite3
+
+    sample_df = pd.DataFrame({
+        "user_id": ["user1"],
+        "ticker": ["005930"],
+        "preference": ["IT"],
+        "reason": ["성장성"]
+    })
+
+    monkeypatch.setattr(pd, "read_sql_query", lambda q, c: sample_df)
+    df = load_feedback_data("data/stock_data.db")
+    assert not df.empty
+
+
+def test_rec_load_feedback_exception(monkeypatch):
+    """피드백 로드 예외 발생 시 빈 DataFrame 반환 확인"""
+    import sqlite3
+    monkeypatch.setattr(sqlite3, "connect", lambda x: (_ for _ in ()).throw(Exception("DB 오류")))
+    df = load_feedback_data("data/stock_data.db")
+    assert df.empty
