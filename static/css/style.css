@@ -774,3 +774,9 @@ select.input-field {
     align-items: center;
     justify-content: space-between;
 }
+
+.navbar-brand {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 1.2rem; font-weight: 800;
+    color: #2b6cb0; text-decoration: none; white-space: nowrap;
+}
