@@ -22,6 +22,24 @@
             </div>
 
             {% if stocks %}
+
+            <!-- 히트맵 -->
+            <div class="heatmap-section">
+                <div class="heatmap-title">📈 등락률 히트맵</div>
+                <div class="heatmap-grid">
+                    {% for stock in stocks %}
+                    <div class="heatmap-cell"
+                         data-rate="{{ stock.change_rate }}"
+                         data-up="{{ 1 if stock.is_up else 0 }}">
+                        <div class="heatmap-name">{{ stock.name }}</div>
+                        <div class="heatmap-rate">
+                            {% if stock.is_up %}+{% endif %}{{ stock.change_rate }}%
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
             <div class="kospi-list">
                 {% for i in range(stocks|length) %}
                 <div class="kospi-item">
@@ -43,6 +61,7 @@
                 </div>
                 {% endfor %}
             </div>
+
             {% else %}
             <p style="text-align:center; color:#718096; padding:2rem;">
                 데이터를 불러올 수 없습니다
@@ -52,5 +71,31 @@
 
         <a href="/" class="btn btn-secondary">메인으로</a>
     </div>
+
+    <script>
+    document.querySelectorAll('.heatmap-cell').forEach(cell => {
+        const rate = Math.abs(parseFloat(cell.dataset.rate));
+        const isUp = parseInt(cell.dataset.up) === 1;
+        // 0~3% 범위를 0~1로 정규화 (3% 초과는 최대 강도)
+        const intensity = Math.min(rate / 3, 1);
+
+        let bg, color;
+        if (isUp) {
+            // 빨간색: 연한 분홍 → 진한 빨강
+            const g = Math.round(245 - 185 * intensity);
+            const b = Math.round(245 - 185 * intensity);
+            bg = `rgb(255,${g},${b})`;
+            color = intensity > 0.45 ? '#fff' : '#c53030';
+        } else {
+            // 파란색: 연한 하늘 → 진한 파랑
+            const r = Math.round(235 - 185 * intensity);
+            const g = Math.round(248 - 188 * intensity);
+            bg = `rgb(${r},${g},255)`;
+            color = intensity > 0.45 ? '#fff' : '#2b6cb0';
+        }
+        cell.style.background = bg;
+        cell.style.color = color;
+    });
+    </script>
 </body>
 </html>
