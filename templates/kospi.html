@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코스피 TOP 10</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 코스피 TOP 10</h1>
+            <p>전날 종가 기준 시가총액 상위 종목</p>
+        </header>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <span style="color:#718096; font-size:0.9rem;">
+                    기준일: {{ base_date }} | 마지막 업데이트: {{ updated }}
+                </span>
+                <a href="/kospi" class="btn-refresh">🔄 새로고침</a>
+            </div>
+
+            {% if stocks %}
+            <div class="kospi-list">
+                {% for i in range(stocks|length) %}
+                <div class="kospi-item">
+                    <div class="kospi-rank">{{ i + 1 }}</div>
+                    <div class="kospi-info">
+                        <div class="kospi-name">{{ stocks[i].name }}</div>
+                        <div class="kospi-ticker">{{ stocks[i].ticker }}</div>
+                    </div>
+                    <div class="kospi-price">
+                        <div class="kospi-close">{{ stocks[i].close }}원</div>
+                        <div class="{% if stocks[i].is_up %}profit{% else %}loss{% endif %}">
+                            {% if stocks[i].is_up %}↗{% else %}↘{% endif %}
+                            {{ stocks[i].change }}
+                            <span class="rate-badge {% if stocks[i].is_up %}rate-up{% else %}rate-down{% endif %}">
+                                {{ stocks[i].change_rate }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="text-align:center; color:#718096; padding:2rem;">
+                데이터를 불러올 수 없습니다
+            </p>
+            {% endif %}
+        </div>
+
+        <a href="/" class="btn btn-secondary">메인으로</a>
+    </div>
+</body>
+</html>

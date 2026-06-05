@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>추천 결과</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 추천 결과</h1>
+            <div class="style-badge">{{ style }}</div>
+        </header>
+
+        <div class="card">
+            <h2>🏆 최종 추천 종목</h2>
+            <div class="final-stock">{{ final }}</div>
+        </div>
+
+        <div class="card">
+            <h2>📈 Top 5 추천 종목</h2>
+            <table class="stock-table">
+                <thead>
+                    <tr>
+                        <th>종목명</th>
+                        <th>섹터</th>
+                        <th>PER</th>
+                        <th>PBR</th>
+                        <th>유사도</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in result %}
+                    <tr>
+                        <td><strong>{{ s.name }}</strong></td>
+                        <td><span class="sector-badge">{{ s.sector }}</span></td>
+                        <td>{{ s.per }}</td>
+                        <td>{{ s.pbr }}</td>
+                        <td>{{ s.score }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>📒 매매일지에 기록하기</h2>
+            <p>추천 종목을 매수했다면 매매일지에 기록하고 만족도를 남겨주세요</p>
+            <a href="/journal" class="btn btn-primary">매매일지 바로가기</a>
+        </div>
+
+        <a href="/" class="btn btn-secondary">처음으로 돌아가기</a>
+    </div>
+</body>
+</html>
