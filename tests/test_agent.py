@@ -1,3 +1,5 @@
+from q_learning.agent import choose_action, get_best_action
+import pytest
 from unittest.mock import patch
 from q_learning.agent import choose_action
 
