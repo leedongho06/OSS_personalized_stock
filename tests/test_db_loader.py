@@ -2,6 +2,7 @@ import sys
 import os
 import pytest
 import pandas as pd
+import sqlite3
 
 # 프로젝트 루트 경로 추가 (Import 에러 방지)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -38,3 +39,34 @@ def test_load_data_success_mock(monkeypatch):
     df = load_data_from_db("data/stock_data.db")
     assert not df.empty
     assert df.iloc[0]['ticker'] == '005930'
+
+def test_load_data_empty_table(monkeypatch):
+    """빈 테이블일 때 빈 DataFrame 반환 확인"""
+    monkeypatch.setattr(pd, "read_sql_query", lambda q, c: pd.DataFrame())
+    df = load_data_from_db("data/stock_data.db")
+    assert df.empty
+
+
+def test_load_feedback_success_mock(monkeypatch):
+    """피드백 데이터 정상 로드 확인"""
+    sample_df = pd.DataFrame({
+        "user_id": ["user1"],
+        "ticker": ["005930"],
+        "preference": ["IT"],
+        "reason": ["성장성"]
+    })
+
+    monkeypatch.setattr(pd, "read_sql_query", lambda q, c: sample_df)
+    df = load_feedback_data("data/stock_data.db")
+    assert not df.empty
+    assert list(df.columns) == ["user_id", "ticker", "preference", "reason"]
+
+
+def test_load_data_exception_handling(monkeypatch):
+    """예외 발생 시 빈 DataFrame 반환 확인"""
+    def mock_connect(path):
+        raise Exception("DB 연결 실패")
+
+    monkeypatch.setattr(sqlite3, "connect", mock_connect)
+    df = load_data_from_db("data/stock_data.db")
+    assert df.empty
