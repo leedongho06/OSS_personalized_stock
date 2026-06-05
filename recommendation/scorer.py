@@ -61,7 +61,7 @@ def infer_style(companies: list) -> tuple:
             "volatility": p["volatility"],
             "score": score,
         })
-        total += scoreㅑ
+        total += score
 
     if not analyses:
         return "중립형", 5, []

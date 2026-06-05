@@ -34,7 +34,7 @@ def test_train_with_feedback_pipeline(monkeypatch, tmp_path):
     monkeypatch.setattr("q_learning.q_table.Q_TABLE_PATH", str(fake_path))
     
     # process_feedback은 사용자 입력을 받으므로 5점(Reward 1.0)을 받은 것으로 Mocking
-    with patch('q_learning.reward.process_feedback', return_value=(5, 1.0)):
+    with patch('q_learning.train.process_feedback', return_value=(5, 1.0)):
         train_with_feedback("안정형", "헬스케어")
         
     assert fake_path.exists()

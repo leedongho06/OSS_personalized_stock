@@ -1,5 +1,6 @@
+import pytest
 from unittest.mock import patch
-from q_learning.agent import choose_action
+from q_learning.agent import choose_action, get_best_action
 
 def test_choose_action_exploitation():
     """확률값이 EPSILON(0.2)보다 클 때, 탐색(Random)이 아닌 최적 액션을 선택하는지 테스트"""
