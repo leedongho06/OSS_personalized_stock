@@ -51,7 +51,9 @@ def infer_style(companies: list) -> tuple:
 
     analyses, total = [], 0
     for name in companies:
-        p = COMPANY_PROFILE[name]
+        p = COMPANY_PROFILE.get(name)
+        if p is None:
+            continue
         score = VOLATILITY_SCORE[p["volatility"]] + SECTOR_SCORE.get(p["sector"], 1)
         analyses.append({
             "name": name,
@@ -59,9 +61,12 @@ def infer_style(companies: list) -> tuple:
             "volatility": p["volatility"],
             "score": score,
         })
-        total += score
+        total += scoreㅑ
 
-    normalized = round((total / len(companies)) * (9 / 4))
+    if not analyses:
+        return "중립형", 5, []
+
+    normalized = round((total / len(analyses)) * (9 / 4))
 
     for (lo, hi), style in STYLE_MAP.items():
         if lo <= normalized <= hi:

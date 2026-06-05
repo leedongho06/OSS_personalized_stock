@@ -139,6 +139,14 @@ def recommend_by_company():
     style, score, analyses = infer_style(companies)
     session["style"] = style
 
+    if companies and not analyses:
+        return render_template(
+        "result.html",
+        style=style,
+        result=[],
+        final="데이터 없음",
+    )
+
     # 💡 정적 CSV 대신 동적 추천 함수 사용
     result = get_dynamic_recommendation(style)
     sector = result.iloc[0]["sector"] if not result.empty else "IT"
