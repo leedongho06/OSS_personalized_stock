@@ -1,118 +1,113 @@
 import os
 import sys
 import time
+import random
 import sqlite3
 import pandas as pd
 from datetime import datetime, timedelta
+
+# 프로젝트 루트 경로 설정 (에러 방지용 절대 경로)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+# DB 매니저 임포트
+from database.db_manager import save_daily_data, DB_PATH
 import FinanceDataReader as fdr
 
-# 상위 폴더의 모듈들을 불러오기 위한 경로 설정
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from data.preprocessor import preprocess_stock_data
-from data.validator import validate_stock_data
-from database.db_manager import save_daily_data  # 팀원 A2가 만든 저장 모듈 (이름은 실제에 맞게 수정 필요)
-
-# 관심 기업 목록
-TICKER_MAP = {
-    "삼성전자": "005930", "SK하이닉스": "000660",
-    "카카오": "035720", "NAVER": "035420",
-    "신한지주": "055550", "KB금융": "105560", "하나금융지주": "086790", "우리금융지주": "316140",
-    "셀트리온": "068270", "삼성바이오로직스": "207940",
-    "현대차": "005380", "기아": "000270", "두산": "000150", "HD현대": "267250",
-    "한국전력": "015760", "SK텔레콤": "017670", "KT": "030200", "LG유플러스": "032640",
-    "LG화학": "051910", "롯데케미칼": "011170",
-    "CJ제일제당": "097950", "농심": "004370", "오리온": "271560",
-    "롯데쇼핑": "023530", "이마트": "139480"
-}
-
-DB_PATH = "database/stock_data.db"  # A2님이 설정한 DB 파일 경로
-
-def get_latest_date_from_db(ticker_code):
-    """
-    [조회 로직] DB를 확인하여 해당 종목의 가장 마지막 데이터 날짜를 가져옵니다.
-    """
+def get_latest_date_in_db():
+    print("[Data Engine] 로컬 자산 레포지토리 날짜 검증 중 ...")
     if not os.path.exists(DB_PATH):
-        return None
-        
+        # DB 파일이 아예 없으면 30일 전부터 수집 시작
+        return (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    
     try:
         conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        # daily_data 테이블에서 해당 종목의 가장 최근 날짜(MAX) 조회
-        query = f"SELECT MAX(date) FROM daily_data WHERE ticker = '{ticker_code}'"
-        cursor.execute(query)
-        result = cursor.fetchone()
+        # 테이블명 호환성을 위해 둘 다 확인
+        try:
+            query = "SELECT MAX(Date) FROM daily_stock_data"
+            df = pd.read_sql(query, conn)
+        except:
+            query = "SELECT MAX(Date) FROM daily_prices"
+            df = pd.read_sql(query, conn)
+            
         conn.close()
         
-        if result and result[0]:
-            return result[0]  # 예: '2026-05-19'
+        latest_date = df.iloc[0, 0]
+        if latest_date:
+            # 마지막으로 저장된 날짜의 '다음 날'부터 긁어오도록 설정
+            next_day = datetime.strptime(latest_date, "%Y-%m-%d") + timedelta(days=1)
+            return next_day.strftime("%Y-%m-%d")
+            
     except Exception as e:
-        print(f"[Warning] DB에서 {ticker_code} 날짜 조회 실패: {e}")
+        pass
         
-    return None
+    return (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
 def run_daily_updater():
-    """
-    [갱신 파이프라인] 비어있는 날짜를 계산하고, 수집-전처리-검증-저장 과정을 지휘합니다.
-    """
-    print("=== [Updater] 주식 데이터 최신화 파이프라인 가동 ===")
-    today_str = datetime.now().strftime('%Y-%m-%d')
+    start_date = get_latest_date_in_db()
+    today = datetime.now().strftime("%Y-%m-%d")
     
-    for name, code in TICKER_MAP.items():
-        print(f"\n>>> [{name} ({code})] 업데이트 확인 중...")
+    if start_date > today:
+        print("--- 이미 모든 데이터가 최신 상태입니다 ---")
+        return
         
-        # 1. DB에서 마지막 저장 날짜 확인
-        last_date_str = get_latest_date_from_db(code)
+    print(f"--- {start_date} 부터 {today} 까지의 주가 데이터 수집 시작 ---")
+    
+    csv_path = os.path.join(BASE_DIR, 'data', 'stocks.csv')
+    if not os.path.exists(csv_path):
+        print("[오류] 대상 종목 리스트(stocks.csv)를 찾을 수 없습니다.")
+        return
         
-        if last_date_str:
-            # 마지막 날짜 '다음 날'부터 수집 시작
-            last_date = datetime.strptime(last_date_str, '%Y-%m-%d')
-            start_date = (last_date + timedelta(days=1)).strftime('%Y-%m-%d')
-            
-            # 만약 DB 날짜가 오늘보다 크거나 같으면 수집 건너뜀 (이미 최신)
-            if start_date > today_str:
-                print("    [통과] 이미 최신화되어 있습니다.")
-                continue
-        else:
-            # DB에 종목 자체가 없으면 최근 1년(365일) 데이터 초기 수집
-            print("    [Info] DB에 기존 데이터 없음. 최근 1년 치 수집 진행.")
-            start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-
-        print(f"    [수집] {start_date} ~ {today_str} 데이터 요청...")
+    stocks_df = pd.read_csv(csv_path)
+    
+    for index, row in stocks_df.iterrows():
+        ticker = str(row['ticker']).zfill(6)
+        name = row['name']
         
         try:
-            # 2. FDR 데이터 수집
-            df = fdr.DataReader(code, start_date, today_str)
+            # 주가 데이터 수집
+            df = fdr.DataReader(ticker, start_date)
             
+            # 주말이거나 상장폐지되어 데이터가 텅 비었다면 스킵
             if df.empty:
-                print(f"    [스킵] 휴장일이거나 해당 기간의 수집 데이터가 없습니다.")
                 continue
                 
-            # 3. 전처리 (날짜 꺼내기 포함)
+            # 💡 [핵심 해결 로직] 어떤 데이터가 들어와도 영어 포맷으로 강제 변환
             df = df.reset_index()
             
-            # ★ 핵심: FDR 결과에는 종목코드(ticker)가 없으므로 DB 저장을 위해 명시적으로 추가
-            df['ticker'] = code 
+            # 1. 혹시 컬럼명이 한글이라면 영어로 바꿈
+            rename_map = {
+                '시가': 'Open', '고가': 'High', '저가': 'Low', 
+                '종가': 'Close', '거래량': 'Volume', '등락률': 'Change', '날짜': 'Date'
+            }
+            df = df.rename(columns=rename_map)
             
-            clean_df = preprocess_stock_data(df)
+            # 2. API가 Change(등락률)를 안 줬다면 Close(종가)를 바탕으로 직접 계산
+            if 'Change' not in df.columns and 'Close' in df.columns:
+                df['Change'] = df['Close'].pct_change().fillna(0)
+                
+            # 3. 필수 컬럼만 안전하게 필터링 (에러의 주범 원천 차단)
+            required_cols = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Change']
+            missing_cols = [c for c in required_cols if c not in df.columns]
             
-            # 4. 유효성 검사 (품질 검증)
-            is_ok, msg = validate_stock_data(clean_df, name)
-            if not is_ok:
-                print(f"    [검증 탈락] {msg}")
+            if missing_cols:
+                print(f"   [경고] {name} : 데이터 누락으로 건너뜁니다 {missing_cols}")
                 continue
                 
-            # 5. DB 갱신 (저장)
-            save_daily_data(code, clean_df)
-            print(f"    [완료] {len(clean_df)}일 치 영업일 데이터 갱신 성공!")
+            df = df[required_cols]
             
-            # 서버 차단 방지를 위한 매너 타임
-            time.sleep(0.2)
+            # DB 저장
+            save_daily_data(ticker, df)
+            print(f"   [적재 완료] {name} ({ticker})")
             
         except Exception as e:
-            print(f"    [에러 발생] {name} 갱신 중 실패: {e}")
-
-    print("\n=== 모든 종목 최신화 작업 완료! ===")
+            print(f"   [오류] {name} : {e}")
+            
+        finally:
+            # 차단 방지를 위한 유동적 휴식 (매우 중요)
+            time.sleep(random.uniform(0.5, 1.2))
+            
+    print("--- 로컬 증분 데이터베이스 최신화 완료 ---")
 
 if __name__ == "__main__":
     run_daily_updater()
