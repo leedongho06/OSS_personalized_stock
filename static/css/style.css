@@ -738,3 +738,21 @@ select.input-field {
     transition: transform 0.15s, opacity 0.15s;
     background: #f7fafc;
 }
+
+.heatmap-cell:hover {
+    transform: scale(1.04);
+    opacity: 0.88;
+}
+
+.heatmap-name {
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+    word-break: keep-all;
+}
+
+.heatmap-rate {
+    font-size: 0.88rem;
+    font-weight: 700;
+}
