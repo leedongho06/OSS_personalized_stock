@@ -50,15 +50,10 @@ class TestStockPipeline(unittest.TestCase):
         conn.close()
 
         # 검증 시작
-<<<<<<< HEAD
-        latest_date = data.updater.get_latest_date_in_db()
-        self.assertEqual(latest_date, past_date)
-=======
         expected_next = (datetime.strptime(past_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
-        latest_date = data.updater.get_latest_date_in_db(ticker)
+        latest_date = data.updater.get_latest_date_in_db()
         self.assertEqual(latest_date, expected_next)
->>>>>>> cd4e3193cc9e26e65e1ea3f639259d98adc492d8
-        
+
         raw_df = fetch_stock_data(ticker, days=10) 
         self.assertIsNotNone(raw_df)
         self.assertFalse(raw_df.empty)
