@@ -548,3 +548,15 @@ header p { color: #718096; }
     grid-column 1 / -1;
     margin-bottom = 0;
 }
+
+.combined-section {
+    flex: 1;
+    padding: 1.5rem;
+}
+
+.combined-divider {
+    width: 1px;
+    background: #e2e8f0;
+    margin: 1.5rem 0;
+    flex-shrink: 0;
+}
