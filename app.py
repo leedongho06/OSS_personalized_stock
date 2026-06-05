@@ -1,4 +1,5 @@
 import os
+import FinanceDataReader as fdr
 import sqlite3
 import random
 from datetime import datetime, timedelta
@@ -138,6 +139,14 @@ def recommend_by_company():
 
     style, score, analyses = infer_style(companies)
     session["style"] = style
+
+    if companies and not analyses:
+        return render_template(
+        "result.html",
+        style=style,
+        result=[],
+        final="데이터 없음",
+    )
 
     # 💡 정적 CSV 대신 동적 추천 함수 사용
     result = get_dynamic_recommendation(style)
@@ -318,32 +327,40 @@ def rate_trade():
 @app.route("/kospi")
 def kospi_top10():
     try:
-        base_date = None
-        for i in range(1, 10):
-            date = (datetime.today() - timedelta(days=i)).strftime("%Y%m%d")
-            df = pykrx_stock.get_market_ohlcv_by_date(date, date, "005930")
-            if not df.empty:
-                base_date = date
-                break
-
-        if not base_date:
-            return render_template("kospi.html", stocks=[], updated="-", base_date="-")
-
-        stock_df = pd.read_csv("data/stocks.csv")
-        tickers = list(zip(stock_df["ticker"].astype(str).str.zfill(6), stock_df["name"]))
-
+        # 1. api_fetcher.py에 정의된 우량 기업 25개 고정 목록 (차단 면역) [2]
+        TICKER_MAP = {
+            "삼성전자": "005930", "SK하이닉스": "000660", "카카오": "035720", "NAVER": "035420",
+            "신한지주": "055550", "KB금융": "105560", "하나금융지주": "086790", "우리금융지주": "316140",
+            "셀트리온": "068270", "삼성바이오로직스": "207940", "현대차": "005380", "기아": "000270",
+            "두산": "000150", "HD현대": "267250", "한국전력": "015760", "SK텔레콤": "017670",
+            "KT": "030200", "LG유플러스": "032640", "LG화학": "051910", "롯데케미칼": "011170",
+            "CJ제일제당": "097950", "농심": "004370", "오리온": "271560", "롯데쇼핑": "023530", "이마트": "139480"
+        }
+        
         stocks = []
-        for ticker, name in tickers:
+        # 최근 7일치 데이터를 가져와서 가장 마지막 영업일 데이터 사용
+        start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+        base_date = None
+        
+        for name, ticker in TICKER_MAP.items():
             try:
-                df = pykrx_stock.get_market_ohlcv_by_date(base_date, base_date, ticker)
+                # 개별 종목 주가 조회 (차단 위험이 없는 안전한 fdr.DataReader 사용) [2]
+                df = fdr.DataReader(ticker, start_date)
                 if not df.empty:
-                    open_price = int(df["시가"].iloc[0])
-                    close = int(df["종가"].iloc[0])
-                    volume = int(df["거래량"].iloc[0])
+                    latest = df.iloc[-1]  # 가장 최근 영업일 데이터
+                    base_date = df.index[-1].strftime('%Y-%m-%d')
+                    
+                    close = int(latest['Close'])
+                    open_price = int(latest['Open'])
+                    volume = int(latest['Volume'])
+                    
+                    # 등락폭 및 등락률 계산
+                    change_rate = round(latest['Change'] * 100, 2) if 'Change' in latest else 0.0
+                    change = close - int(df.iloc[-2]['Close']) if len(df) > 1 else 0
+                    
+                    # 시가총액 근사값 (종가 * 거래량)
                     marcap = close * volume
-                    change = close - open_price
-                    change_rate = round((change / open_price) * 100, 2) if open_price > 0 else 0.0
-
+                    
                     stocks.append({
                         "ticker": ticker,
                         "name": name,
@@ -351,25 +368,26 @@ def kospi_top10():
                         "change": f"{change:+,}",
                         "change_rate": change_rate,
                         "is_up": change >= 0,
-                        "marcap": marcap,
+                        "marcap": marcap
                     })
             except Exception:
                 continue
-
+                
+        # 3. 계산된 시가총액(marcap)을 기준으로 내림차순 정렬 후 상위 10개만 자르기
         stocks = sorted(stocks, key=lambda x: x["marcap"], reverse=True)[:10]
         now = datetime.now().strftime("%H:%M:%S")
         
         return render_template(
-            "kospi.html",
-            stocks=stocks,
-            updated=now,
-            base_date=base_date
+            "kospi.html", 
+            stocks=stocks, 
+            updated=now, 
+            base_date=base_date if base_date else now[:10]
         )
-
+        
     except Exception as e:
-        print(f"오류: {e}")
+        print(f"FinanceDataReader 오류: {e}")
         return render_template("kospi.html", stocks=[], updated="-", base_date="-")
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+

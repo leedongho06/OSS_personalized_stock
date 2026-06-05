@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}맞춤형 주식 추천 시스템{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="/" class="navbar-brand">
+                <span class="navbar-logo">📈</span>
+                <span>StockPick</span>
+            </a>
+            <button type="button" class="navbar-toggle" aria-label="메뉴 열기"
+                    onclick="document.querySelector('.navbar-links').classList.toggle('open')">☰</button>
+            <div class="navbar-links">
+                <a href="/" class="navbar-link {% if request.path == '/' %}active{% endif %}">홈</a>
+                <a href="/kospi" class="navbar-link {% if request.path == '/kospi' %}active{% endif %}">코스피 TOP10</a>
+                <a href="/news" class="navbar-link {% if request.path == '/news' %}active{% endif %}">뉴스 평가</a>
+                <a href="/journal" class="navbar-link {% if request.path == '/journal' %}active{% endif %}">매매일지</a>
+                <a href="/portfolio" class="navbar-link {% if request.path == '/portfolio' %}active{% endif %}">포트폴리오</a>
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

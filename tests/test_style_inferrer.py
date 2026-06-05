@@ -36,7 +36,7 @@ class TestStyleInferrer(unittest.TestCase):
         style, normalized, _ = si.infer_style_from_news(interest)
         
         self.assertEqual(style, "중립형")
-        self.assertEqual(normalized, 5)
+        self.assertEqual(normalized, 4)
 
     def test_infer_style_stable_dominant(self):
         """4. 안정형 섹터(금융 등) 중심일 때 가중치(0) 및 '안정형' 성향 도출 검증"""

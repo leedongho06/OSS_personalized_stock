@@ -14,7 +14,7 @@ sys.path.append(BASE_DIR)
 from database.db_manager import save_daily_data, DB_PATH
 import FinanceDataReader as fdr
 
-def get_latest_date_in_db():
+def get_latest_date_in_db(ticker=None):
     print("[Data Engine] 로컬 자산 레포지토리 날짜 검증 중 ...")
     if not os.path.exists(DB_PATH):
         # DB 파일이 아예 없으면 30일 전부터 수집 시작
@@ -42,6 +42,10 @@ def get_latest_date_in_db():
         pass
         
     return (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+def get_latest_date_from_db(ticker=None):
+    """get_latest_in_db의 호환용 별칭 (ticker 인자 무시)."""
+    return get_latest_date_in_db()
 
 def run_daily_updater():
     start_date = get_latest_date_in_db()
