@@ -22,11 +22,11 @@ class TestStockPipeline(unittest.TestCase):
         cursor = conn.cursor()
         
         # 이전 테스트가 실패해서 남은 찌꺼기 테이블 초기화
-        cursor.execute("DROP TABLE IF EXISTS daily_data")
+        cursor.execute("DROP TABLE IF EXISTS daily_stock_data")
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS daily_data (
-                ticker TEXT, date TEXT, open REAL, high REAL, low REAL, close REAL, volume INTEGER,
-                PRIMARY KEY (ticker, date)
+            CREATE TABLE IF NOT EXISTS daily_stock_data (
+                Date TEXT, Ticker TEXT, Open REAL, High REAL, Low REAL, Close REAL, Volume INTEGER, Change REAL,
+                PRIMARY KEY (Date, Ticker)
             )
         """)
         conn.commit()
@@ -45,13 +45,19 @@ class TestStockPipeline(unittest.TestCase):
         # 가짜 DB에 데이터 주입
         conn = sqlite3.connect(TEST_DB_PATH)
         cursor = conn.cursor()
-        cursor.execute(f"INSERT INTO daily_data VALUES ('{ticker}', '{past_date}', 70000, 71000, 69000, 70500, 1000000)")
+        cursor.execute(f"INSERT INTO daily_stock_data VALUES ('{past_date}', '{ticker}', 70000, 71000, 69000, 70500, 1000000, 0.0)")
         conn.commit()
         conn.close()
 
         # 검증 시작
+<<<<<<< HEAD
         latest_date = data.updater.get_latest_date_in_db()
         self.assertEqual(latest_date, past_date)
+=======
+        expected_next = (datetime.strptime(past_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+        latest_date = data.updater.get_latest_date_in_db(ticker)
+        self.assertEqual(latest_date, expected_next)
+>>>>>>> cd4e3193cc9e26e65e1ea3f639259d98adc492d8
         
         raw_df = fetch_stock_data(ticker, days=10) 
         self.assertIsNotNone(raw_df)

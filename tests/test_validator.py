@@ -40,7 +40,7 @@ def test_validate_feedback_data_empty():
 def test_validate_feedback_data_missing_columns():
     df = pd.DataFrame({'user_id': ['user1']}) # 나머지 필수 컬럼 누락
     with pytest.raises(ValueError, match="피드백 필수 컬럼이 누락되었습니다"):
-        DataValidator.validate_stock_data(df) # 참고: 여기는 feedback으로 수정해야 할 수도 있음
+        DataValidator.validate_feedback_data(df) # 참고: 여기는 feedback으로 수정해야 할 수도 있음
 
 # [7] 선호도 값 범위 에러 테스트
 def test_validate_feedback_preference_error():
