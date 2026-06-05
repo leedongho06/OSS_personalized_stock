@@ -109,5 +109,5 @@ def get_recent_stocks_for_web(limit=50):
         print(f"[DB 읽기 에러] {e}")
         return []
 
-# 💡 스크립트가 로드될 때마다 테이블 존재 여부를 체크하고 없으면 생성합니다.
-init_db()
+if __name__ == "__main__":
+    init_db()
