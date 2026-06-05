@@ -113,5 +113,5 @@ def run_daily_updater():
             
     print("--- 로컬 증분 데이터베이스 최신화 완료 ---")
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
     run_daily_updater()
