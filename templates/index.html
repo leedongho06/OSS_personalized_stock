@@ -125,13 +125,5 @@
 {% block extra_js %}
     <script src="{{ url_for('static', filename='js/autocomplete.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/recent-search.js') }}" defer></script>
-    <script>
-        document.querySelectorAll('input[name="style"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-                document.querySelectorAll('.style-option-box').forEach(box => box.classList.remove('selected'));
-                radio.closest('.style-option').querySelector('.style-option-box').classList.add('selected');
-                document.getElementById('direct-submit').disabled = false;
-            });
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/style-select.js') }}" defer></script>
 {% endblock %}

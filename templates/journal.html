@@ -114,39 +114,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% if trades %}
     <script>
-        const labels = {{ chart_labels | tojson }};
-        const data = {{ chart_data | tojson }};
-        const colors = [
-            '#3182ce', '#63b3ed', '#90cdf4',
-            '#2b6cb0', '#bee3f8', '#ebf8ff',
-            '#1a365d', '#2a4365', '#2c5282', '#2d3748'
-        ];
-
-        new Chart(document.getElementById('portfolioChart'), {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: colors.slice(0, data.length),
-                    borderWidth: 2,
-                    borderColor: '#fff',
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.label + ': ' + context.parsed.toFixed(1) + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        window.PORTFOLIO_CHART_DATA = {
+            labels: {{ chart_labels | tojson }},
+            data: {{ chart_data | tojson }}
+        };
     </script>
+    <script src="{{ url_for('static', filename='js/portfolio-chart.js') }}"></script>
     {% endif %}
 {% endblock %}
