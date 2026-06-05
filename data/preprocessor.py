@@ -32,7 +32,7 @@ def preprocess_stock_data(df):
 
     return processed_df
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma:no cover
     # 테스트용 가짜 데이터
     test_data = pd.DataFrame({
         'Date': ['2026-04-15', '2026-04-16', '2026-04-16'], # 중복 날짜
