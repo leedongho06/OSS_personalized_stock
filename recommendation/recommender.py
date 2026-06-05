@@ -23,10 +23,18 @@ def build_feature_matrix(df: pd.DataFrame):
     return matrix, scaler
 
 def get_ideal_vector(style: str, scaler: MinMaxScaler) -> np.ndarray:
-	cols = get_feature_cols()
-	profile= get_ideal(style)
-	raw = np.array([[profile[col] for col in cols]])
-	return scaler.transform(raw)
+    cols = get_feature_cols()
+    profile = get_ideal(style)
+    
+    # 투자 스타일 데이터 중 누락된 값이 있다면 0으로 안전하게 처리합니다.
+    raw = np.array([[profile.get(col, 0) if pd.notna(profile.get(col)) else 0 for col in cols]])
+    
+    ideal_vec = scaler.transform(raw)
+    
+    # 최종 벡터 내 결측치 처리
+    ideal_vec = np.nan_to_num(ideal_vec, nan=0.0)
+    
+    return ideal_vec
 
 def recommend(df: pd.DataFrame, style: str, top_n: int = 5) -> pd.DataFrame:
     if df.empty:
@@ -35,11 +43,15 @@ def recommend(df: pd.DataFrame, style: str, top_n: int = 5) -> pd.DataFrame:
 
     matrix, scaler = build_feature_matrix(df)
     ideal_vec = get_ideal_vector(style, scaler)
+    
+    # 결측치가 완벽히 제거된 상태에서 안정적으로 코사인 유사도를 계산합니다.
     scores = cosine_similarity(ideal_vec, matrix).flatten()
 
     result = df.copy()
     result["score"] = scores
-    actual_n = min(top_n, len(result))  # 종목 수 부족할 때 처리
+    actual_n = min(top_n, len(result))  # 종목 수가 요청한 n개보다 부족할 때 처리
+    
+    # 기존 코드의 컬럼 추출 구조 유지
     result = (
         result.sort_values("score", ascending=False)
               .head(actual_n)[["ticker", "name", "sector", "per", "pbr", "score"]]

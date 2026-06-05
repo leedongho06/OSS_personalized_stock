@@ -1,0 +1,74 @@
+.recent-wrap {
+    margin-top: 1rem;
+}
+
+.recent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.recent-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #a0aec0;
+}
+
+.recent-clear-all {
+    font-size: 0.72rem;
+    color: #b0bec5;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s;
+}
+
+.recent-clear-all:hover { color: #718096; }
+
+.recent-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.recent-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.75rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.recent-chip-text {
+    font-size: 0.83rem;
+    color: #4a5568;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.recent-chip:hover {
+    border-color: #90cdf4;
+    background: #ebf8ff;
+}
+
+.recent-chip-x {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #cbd5e0;
+    font-size: 0.7rem;
+    padding: 0 0 0 0.5rem;
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+
+.recent-chip-x:hover { color: #718096; }
