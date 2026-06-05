@@ -723,3 +723,9 @@ select.input-field {
     color: #2d3748;
     margin-bottom: 0.6rem;
 }
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
