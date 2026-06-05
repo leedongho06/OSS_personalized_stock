@@ -551,6 +551,25 @@ header p { color: #718096; }
 .combined-section {
     flex: 1;
     padding: 1.5rem;
+    padding-bottom: 5rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.combined-section > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.combined-section > form > .btn {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    right: 1.5rem;
+    width: auto;
+    margin-top: 0;
 }
 
 .combined-divider {
@@ -568,5 +587,13 @@ header p { color: #718096; }
         width: auto;
         height: 1px;
         margin: 0 1.5rem;
+    }
+    .combined-section > form > .btn {
+        position: static;
+        width: 100%;
+        margin-top: auto;
+    }
+    .combined-section {
+        padding-bottom: 1.5rem;
     }
 }
