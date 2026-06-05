@@ -2,37 +2,163 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>뉴스 관심도 평가</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>실시간 AI 뉴스 평가</title>
+    <style>
+        /* 기본 폰트 및 배경 설정 */
+        body { 
+            font-family: 'Pretendard', -apple-system, sans-serif; 
+            background-color: #f4f7f6; 
+            color: #333; 
+            margin: 0; 
+            padding: 40px 20px; 
+        }
+        /* 중앙 정렬되는 메인 컨테이너 */
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+        }
+        /* 제목 스타일 */
+        h2 { 
+            text-align: center; 
+            color: #1e293b; 
+            margin-bottom: 10px; 
+            font-size: 28px; 
+        }
+        .subtitle { 
+            text-align: center; 
+            color: #64748b; 
+            margin-bottom: 40px; 
+            font-size: 15px; 
+        }
+        
+        /* 뉴스 카드 디자인 */
+        .news-card { 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 25px; 
+            margin-bottom: 20px; 
+            background-color: white; 
+            transition: all 0.3s ease; 
+        }
+        .news-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1); 
+            border-color: #cbd5e1; 
+        }
+        
+        /* AI 섹터 배지 */
+        .sector-badge { 
+            display: inline-block; 
+            background-color: #eff6ff; 
+            color: #2563eb; 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            font-weight: 800; 
+            margin-bottom: 15px; 
+            border: 1px solid #bfdbfe; 
+        }
+        
+        /* 뉴스 텍스트 */
+        .news-title { font-size: 19px; font-weight: bold; margin: 0 0 12px 0; line-height: 1.4; color: #0f172a; }
+        .news-desc { color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 20px; }
+        .news-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 20px; }
+        .news-link { color: #3b82f6; text-decoration: none; font-weight: 600; }
+        .submit-btn { display: block; width: 100%; font-size: 18px; font-weight: bold; padding: 18px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; margin-top: 40px; }
+        
+        /* ⭐ 별점 UI 전용 CSS (버그 수정됨) */
+        .rating-box { 
+            background-color: #f8fafc; 
+            padding: 15px 20px; 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border: 1px solid #f1f5f9; 
+        }
+        .rating-label { font-weight: 600; color: #334155; font-size: 15px; }
+        .star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; }
+        .star-rating input { display: none; }
+        .star-rating label { font-size: 28px; color: #cbd5e1; cursor: pointer; transition: color 0.2s; padding: 0 2px; }
+        
+        /* 1. 실제 선택(체크)된 별점 색상 칠하기 */
+        .star-rating input:checked ~ label { color: #fbbf24; }
+        /* 2. 별점 구역에 마우스가 올라가면 기존 색상을 임시로 지우기 (3점 고정 버그 해결!) */
+        .star-rating:hover label { color: #cbd5e1; }
+        /* 3. 마우스가 올라가 있는 별과 그 왼쪽 별들만 다시 칠하기 */
+        .star-rating label:hover, 
+        .star-rating label:hover ~ label { color: #fbbf24; }
+
+        /* ⭐ 시나리오 3: 형광펜 하이라이트 효과 디자인 */
+        .highlight-word {
+            background: linear-gradient(180deg, rgba(255,255,255,0) 60%, #fde047 40%);
+            font-weight: 800;
+            color: #0f172a;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>📰 뉴스 관심도 평가</h1>
-            <p>각 뉴스에 별점을 매겨주세요 (1~5점)</p>
-        </header>
-
+        <h2>🔥 실시간 AI 뉴스 분석</h2>
+        <p class="subtitle">제미나이 AI가 분류한 뉴스를 읽고 관심도를 평가해주세요!</p>
         <form action="/news/rate" method="POST">
-            {% for i in range(news|length) %}
-            <div class="card news-card">
-                <span class="sector-badge">{{ news[i].sector }}</span>
-                <h3>{{ news[i].title }}</h3>
-                <p>{{ news[i].description }}</p>
-                <div class="star-rating">
-                    {% for star in [5,4,3,2,1] %}
-                    <input type="radio" name="rating_{{ i }}"
-                           id="s{{ i }}_{{ star }}"
-                           value="{{ star }}" required>
-                    <label for="s{{ i }}_{{ star }}">★</label>
-                    {% endfor %}
+            {% for n in news %}
+            <div class="news-card">
+                <div class="sector-badge">{{ n.sector }}</div>
+                
+                <h3 class="news-title">{{ n.title | striptags }}</h3>
+                <p class="news-desc">{{ n.description | striptags }}</p>
+                
+                <div class="news-meta">
+                    <a href="{{ n.link }}" class="news-link" target="_blank">🔗 기사 원문 보기</a>
+                    <span style="color: #94a3b8;">{{ n.pubDate }}</span>
+                </div>
+
+                <div class="rating-box">
+                    <span class="rating-label">이 뉴스에 대한 관심도는? 👉</span>
+                    
+                    <div class="star-rating">
+                        <input type="radio" id="star5_{{ loop.index0 }}" name="rating_{{ loop.index0 }}" value="5">
+                        <label for="star5_{{ loop.index0 }}" title="5점">★</label>
+                        <input type="radio" id="star4_{{ loop.index0 }}" name="rating_{{ loop.index0 }}" value="4">
+                        <label for="star4_{{ loop.index0 }}" title="4점">★</label>
+                        <input type="radio" id="star3_{{ loop.index0 }}" name="rating_{{ loop.index0 }}" value="3" checked>
+                        <label for="star3_{{ loop.index0 }}" title="3점">★</label>
+                        <input type="radio" id="star2_{{ loop.index0 }}" name="rating_{{ loop.index0 }}" value="2">
+                        <label for="star2_{{ loop.index0 }}" title="2점">★</label>
+                        <input type="radio" id="star1_{{ loop.index0 }}" name="rating_{{ loop.index0 }}" value="1">
+                        <label for="star1_{{ loop.index0 }}" title="1점">★</label>
+                    </div>
                 </div>
             </div>
             {% endfor %}
-            <button type="submit" class="btn btn-primary">
-                분석 결과 보기
-            </button>
+            <button type="submit" class="submit-btn">평가 완료하고 맞춤형 주식 추천받기 ✨</button>
         </form>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 하이라이트할 핵심 주식 종목 이름들
+            const targetKeywords = ["삼성전자", "SK하이닉스", "카카오", "NAVER", "네이버", "현대차", "기아", "셀트리온", "LG화학", "두산", "한전", "LG유플러스", "이마트"];
+            
+            const textElements = document.querySelectorAll('.news-title, .news-desc');
+            
+            textElements.forEach(el => {
+                let htmlContent = el.innerHTML;
+                targetKeywords.forEach(keyword => {
+                    // 단어를 찾아서 예쁜 형광펜 디자인 태그로 감싸줍니다.
+                    const regex = new RegExp(keyword, "g");
+                    htmlContent = htmlContent.replace(regex, `<span class="highlight-word">${keyword}</span>`);
+                });
+                el.innerHTML = htmlContent;
+            });
+        });
+    </script>
 </body>
 </html>

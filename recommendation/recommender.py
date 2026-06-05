@@ -6,19 +6,20 @@ from recommendation.profile import get_feature_cols, get_ideal
 
 def build_feature_matrix(df: pd.DataFrame):
     cols = get_feature_cols()
-    
-    # 1차 처리: 각 컬럼의 중앙값(median)으로 빈 값을 채웁니다.
-    feature_df = df[cols].fillna(df[cols].median())
-    
-    # 2차 처리(안전 패치): 특정 컬럼 전체가 NaN이어서 median도 NaN인 경우를 대비해 0으로 한 번 더 채웁니다.
+    feature_df = df[cols].copy()
+
+    # 숫자형으로 변환
+    for col in cols:
+        feature_df[col] = pd.to_numeric(feature_df[col], errors="coerce")
+
+    # 결측값 처리
+    feature_df = feature_df.fillna(feature_df.median())
+
+    # 그래도 NaN 있으면 0으로
     feature_df = feature_df.fillna(0)
-    
+
     scaler = MinMaxScaler()
     matrix = scaler.fit_transform(feature_df)
-    
-    # 정규화 계산 과정에서 생길 수 있는 결측치를 최종 방어합니다.
-    matrix = np.nan_to_num(matrix, nan=0.0)
-    
     return matrix, scaler
 
 def get_ideal_vector(style: str, scaler: MinMaxScaler) -> np.ndarray:
