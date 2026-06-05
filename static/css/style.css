@@ -764,3 +764,13 @@ select.input-field {
     background: #fff;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
+
+.navbar-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
