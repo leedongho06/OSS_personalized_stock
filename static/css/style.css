@@ -729,3 +729,12 @@ select.input-field {
     grid-template-columns: repeat(5, 1fr);
     gap: 6px;
 }
+
+.heatmap-cell {
+    padding: 0.7rem 0.4rem;
+    border-radius: 8px;
+    text-align: center;
+    cursor: default;
+    transition: transform 0.15s, opacity 0.15s;
+    background: #f7fafc;
+}
