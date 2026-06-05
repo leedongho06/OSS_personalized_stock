@@ -560,3 +560,14 @@ header p { color: #718096; }
     margin: 1.5rem 0;
     flex-shrink: 0;
 }
+
+@media (max-width: 600px) {
+    .card-combined {
+        flex-direction: column;
+    }
+    .combined-divider {
+        width: auto;
+        height: 1px;
+        margin: 0 1.5rem;
+    }
+}
