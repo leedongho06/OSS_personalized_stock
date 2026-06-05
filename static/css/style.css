@@ -712,3 +712,14 @@ select.input-field {
     background-color: white;
     cursor: pointer;
 }
+
+.heatmap-section {
+    margin-bottom: 1.5rem;
+}
+
+.heatmap-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.6rem;
+}
