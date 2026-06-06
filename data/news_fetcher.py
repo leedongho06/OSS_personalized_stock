@@ -70,7 +70,7 @@ def fetch_all_sector_news(display_per_keyword=5):
 
     return all_news
 
-if __name__ == "__main__": #pragme:no cover
+if __name__ == "__main__": # pragma : no cover
     total_results = fetch_all_sector_news(display_per_keyword=3)
     print(f"\n수집 완료! 총 {len(total_results)}개의 유니크한 기사를 가져왔습니다.")
     print(json.dumps(total_results[:10], indent=4, ensure_ascii=False)) # 상위 10개만 출력
