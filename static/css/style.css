@@ -374,6 +374,11 @@ header p { color: #718096; }
 
 .input-field:focus { border-color: #4299e1; }
 
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .stock-table {
     width: 100%;
     border-collapse: collapse;
@@ -449,7 +454,7 @@ header p { color: #718096; }
 .compare-tab {
     width: 95px;
     height: 36px;
-    padding = 0;
+    padding: 0;
     box-sizing: border-box;
     font-size: 11px;
     font-weight: 600;
@@ -469,7 +474,7 @@ header p { color: #718096; }
     color: #3182ce;
 }
 
-.compare-tab:active {
+.compare-tab.active {
     background: #3182ce;
     border-color: #3182ce;
     color: #fff;
@@ -546,7 +551,7 @@ header p { color: #718096; }
     flex-direction: row;
     gap: 0;
     padding: 0;
-    margin-bottom = 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .combined-section {
