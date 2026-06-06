@@ -176,3 +176,18 @@ pip install -r requirements.txt
 | `google-generativeai` | 0.8.3 | 뉴스 섹터 AI 자동 분류 |
 
 ---
+
+## 환경 변수 설정
+
+뉴스 섹터를 AI로 자동 분류하려면 [Google AI Studio](https://aistudio.google.com/)에서 발급받은
+Gemini API 키를 환경 변수로 등록합니다. (없어도 실행에는 지장이 없습니다.)
+
+```bash
+# macOS / Linux
+export GEMINI_API_KEY="발급받은_API_키"
+
+# Windows (PowerShell)
+$env:GEMINI_API_KEY="발급받은_API_키"
+```
+
+---
