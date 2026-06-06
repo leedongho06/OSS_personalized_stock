@@ -1,1 +1,9 @@
-# OSS_Project-personalized-stock-recommedation-
+# OSS_Project-personalized-stock-recommedation-# 📈 맞춤형 주식 추천 시스템 (Personalized Stock)
+
+> 사용자의 **투자 성향**을 분석하고, **코사인 유사도 기반 추천**과 **강화학습(Q-Learning)** 을 결합하여
+> 개인에게 맞는 국내 주식 종목을 추천하는 프로젝트입니다.
+
+CLI와 웹(Flask) 두 가지 인터페이스를 제공하며, 매일 변하는 시장 데이터를 반영해
+"고정된 추천"이 아니라 **동적으로 변화하는 추천 결과**를 보여주는 것을 목표로 합니다.
+
+---
