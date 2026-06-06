@@ -148,3 +148,31 @@ python -m venv venv
 # 활성화 — macOS / Linux
 source venv/bin/activate
 ```
+
+### 3. 의존성 설치
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
+## 의존성
+
+`requirements.txt`에 명시된 핵심 의존성은 다음과 같습니다.
+
+| 패키지 | 버전 | 용도 |
+| --- | --- | --- |
+| `pandas` | 1.5.0 | 데이터 처리·가공 |
+| `numpy` | 1.23.3 | 수치 연산 |
+| `scikit-learn` | 1.3.2 | 코사인 유사도 추천 알고리즘 |
+| `Flask` | 2.1.1 | 웹 서버 / API |
+| `finance-datareader` | 0.9.94 | 주가 데이터 수집 |
+| `pykrx` | 1.0.51 | KRX 종목·재무 데이터 수집 |
+| `requests` | 2.32.4 | HTTP 요청 |
+| `click` | 8.1.8 | 프로파일 관리 CLI |
+| `pytest` | 7.4.4 | 단위 테스트 |
+| `google-generativeai` | 0.8.3 | 뉴스 섹터 AI 자동 분류 |
+
+---
