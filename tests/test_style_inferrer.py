@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 import news.style_inferrer as si
 
 class TestStyleInferrer(unittest.TestCase):
@@ -61,6 +62,23 @@ class TestStyleInferrer(unittest.TestCase):
         
         self.assertEqual(style, "중립형")
         self.assertEqual(normalized, 4)
+
+    # ==============================================================================
+    # 💡 [새로 추가된 핵심 코드] 52번 줄(Unreachable Fallback) 완벽 저격!
+    # ==============================================================================
+    @patch.dict('news.style_inferrer.STYLE_MAP', clear=True)
+    def test_infer_style_unreachable_fallback(self):
+        """
+        STYLE_MAP에 매칭되는 구간이 아예 없을 때 
+        최후의 방어선(52번 줄)을 타서 '중립형'을 반환하는지 테스트
+        """
+        # IT 5.0이면 점수는 9가 나오지만, STYLE_MAP을 비웠기 때문에 52번 줄로 직행합니다.
+        interest = {"IT": 5.0}
+        style, normalized, analyses = si.infer_style_from_news(interest)
+        
+        # 52번 줄의 기본값인 "중립형"이 반환되어야 정상 통과!
+        self.assertEqual(style, "중립형")
+        self.assertEqual(normalized, 9)
 
 if __name__ == '__main__':
     unittest.main()
