@@ -260,7 +260,7 @@ pytest tests/test_recommendation.py
 이 프로젝트는 **MIT License** 하에 배포됩니다. 자세한 내용은 [`LICENSE`](./LICENSE) 파일을 참고하세요.
 
 ```
-Copyright (c) 2026 OSS_personalized_stock contributors
+Copyright (c) Dongho Lee(leedongho06), Seonghyeon Park(sballgut), Yeonwoo Jang(jangyeonwoo1), Taegyeong Hong(ner4l)
 
 자유롭게 사용·복제·수정·배포할 수 있으며, 위 저작권 고지와 라이선스 고지를
 소프트웨어의 모든 사본 또는 상당 부분에 포함해야 합니다.
