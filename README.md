@@ -245,6 +245,9 @@ python main.py recommend        # 저장된 프로파일 기반 추천
 `tests/` 디렉터리에 31개의 `pytest` 테스트가 포함되어 있습니다.
 
 ```bash
+# pytest-cov 설치
+pip install pytest-cov
+
 # 전체 테스트 실행
 pytest
 
