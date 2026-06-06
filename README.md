@@ -120,3 +120,12 @@ OSS_personalized_stock/
 ```
 
 ---
+
+## 시스템 요구사항
+
+- **Python 3.8 이상** (3.9 ~ 3.10 권장)
+- `pip` 및 `venv` (Python 표준 포함)
+- 인터넷 연결 (주가/뉴스 실시간 수집용)
+- 운영체제: Windows / macOS / Linux
+
+---
