@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>투자 매매일지</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}투자 매매일지{% endblock %}
+
+{% block content %}
     <div class="container">
         <header>
             <h1>📒 투자 매매일지</h1>
@@ -108,46 +103,22 @@
                 <canvas id="portfolioChart"></canvas>
             </div>
         </div>
-
-        <script>
-            const labels = {{ chart_labels | tojson }};
-            const data = {{ chart_data | tojson }};
-            const colors = [
-                '#3182ce', '#63b3ed', '#90cdf4',
-                '#2b6cb0', '#bee3f8', '#ebf8ff',
-                '#1a365d', '#2a4365', '#2c5282', '#2d3748'
-            ];
-
-            new Chart(document.getElementById('portfolioChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors.slice(0, data.length),
-                        borderWidth: 2,
-                        borderColor: '#fff',
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.label + ': ' + context.parsed.toFixed(1) + '%';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        </script>
         {% endif %}
 
         <a href="/portfolio" class="btn btn-secondary">포트폴리오로</a>
         <a href="/" class="btn btn-secondary">메인으로</a>
     </div>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% if trades %}
+    <script>
+        window.PORTFOLIO_CHART_DATA = {
+            labels: {{ chart_labels | tojson }},
+            data: {{ chart_data | tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/portfolio-chart.js') }}"></script>
+    {% endif %}
+{% endblock %}

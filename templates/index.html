@@ -1,27 +1,99 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSS Personalized Stock</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}맞춤형 주식 추천 시스템{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/recent-search.css') }}">
+{% endblock %}
+
+{% block content %}
     <div class="container">
         <header>
-            <h1>📈 OSS Personalized Stock</h1>
-            <p>나만의 투자 성향에 맞는 종목을 추천해드립니다</p>
+            <h1>맞춤형 주식 추천 시스템</h1>
+            <p>당신의 투자 성향에 딱 맞는 종목을 찾아드립니다.</p>
         </header>
 
-        <div class="card-grid">
-            <div class="card">
-                <h2>💼 내 포트폴리오</h2>
-                <p>관심 기업을 입력하고<br>나만의 투자 성향을 파악합니다</p>
-                <a href="/portfolio" class="btn btn-primary">
-                    포트폴리오 시작하기
-                </a>
+        <!-- 관심 기업 입력 + 투자 성향 직접 선택: 전체 너비 -->
+        <div class="card card-combined">
+
+            <div class="combined-section">
+                <h2>🏢 관심 기업 입력</h2>
+                <p>관심 있는 기업을 입력하면<br>투자 성향을 분석해드립니다</p>
+
+                <form id="rec-form" action="/recommend" method="POST">
+                    <div class="ac-wrap">
+                        <div id="tag-field" class="tag-field" onclick="handleFieldClick(event)">
+                            <input
+                                id="tag-text"
+                                class="tag-text"
+                                type="text"
+                                placeholder="예: 삼성전자, 카카오, 현대차…"
+                                maxlength="30"
+                                autocomplete="off"
+                                spellcheck="false"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="tag-meta">
+                        <kbd>Enter</kbd> 또는 <kbd>,</kbd> 로 추가 · <kbd>←</kbd> 로 삭제
+                        <span class="spacer"></span>
+                        <button type="button" id="reset-btn" class="tag-reset" style="display:none" onclick="clearTagsAll()">
+                            전체 삭제
+                        </button>
+                        <span id="tag-count" class="tag-count" style="display:none"></span>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="btn btn-primary" disabled>
+                        종목 추천받기
+                    </button>
+                </form>
+
+                <div id="recent-searches" class="recent-wrap"></div>
             </div>
 
+            <div class="combined-divider"></div>
+
+            <div class="combined-section">
+                <h2>🎯 투자 성향 직접 선택</h2>
+                <p>나의 투자 성향을 알고 있다면<br>바로 선택해서 추천받으세요</p>
+                <form action="/recommend/direct" method="POST">
+                    <div class="style-select-group">
+                        <label class="style-option">
+                            <input type="radio" name="style" value="안정형" required>
+                            <span class="style-option-box">
+                                <span class="style-icon">🛡️</span>
+                                <span class="style-name">안정형</span>
+                                <span class="style-desc">낮은 PER·PBR<br>안정적 수익 추구</span>
+                            </span>
+                        </label>
+                        <label class="style-option">
+                            <input type="radio" name="style" value="중립형">
+                            <span class="style-option-box">
+                                <span class="style-icon">⚖️</span>
+                                <span class="style-name">중립형</span>
+                                <span class="style-desc">균형 잡힌<br>포트폴리오</span>
+                            </span>
+                        </label>
+                        <label class="style-option">
+                            <input type="radio" name="style" value="공격형">
+                            <span class="style-option-box">
+                                <span class="style-icon">🚀</span>
+                                <span class="style-name">공격형</span>
+                                <span class="style-desc">높은 성장 기대<br>고수익 추구</span>
+                            </span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="direct-submit" disabled>
+                        바로 추천받기
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- 뉴스 관심도 평가: 별도 행 -->
+        <div class="card-grid">
             <div class="card">
                 <h2>📰 뉴스 관심도 평가</h2>
                 <p>최신 뉴스에 별점을 매겨<br>투자 성향을 파악합니다</p>
@@ -46,6 +118,12 @@
                 </a>
             </div>
         </div>
+
     </div>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ url_for('static', filename='js/autocomplete.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/recent-search.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/style-select.js') }}" defer></script>
+{% endblock %}

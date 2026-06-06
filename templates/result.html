@@ -1,17 +1,27 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>추천 결과</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <div class="container">
+{% extends "base.html" %}
+
+{% block title %}추천 결과{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/radar.css') }}">
+{% endblock %}
+
+{% block content %}
+    <div class="container" id="resultContainer" data-style="{{ style }}">
         <header>
             <h1>📊 추천 결과</h1>
             <div class="style-badge">{{ style }}</div>
         </header>
+
+        <div class="card">
+            <h2>🧭 투자 성향 분석</h2>
+            <div class="radar-wrap">
+                <div class="radar-canvas-wrap">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="radar-legend" id="radarLegend"></div>
+            </div>
+        </div>
 
         <div class="card">
             <h2>🏆 최종 추천 종목</h2>
@@ -45,6 +55,21 @@
         </div>
 
         <div class="card">
+            <h2>📊 종목 지표 비교</h2>
+            <div class="compare-tabs">
+                <button class="compare-tab active" data-metric="per">PER</button>
+                <button class="compare-tab" data-metric="pbr">PBR</button>
+                <button class="compare-tab" data-metric="score">유사도</button>
+            </div>
+            <div class="compare-chart-wrap">
+                <canvas id="compareChart"></canvas>
+                <div id="compareNoData" class="compare-no-data" style="display:none">
+                    데이터가 없습니다
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
             <h2>📒 매매일지에 기록하기</h2>
             <p>추천 종목을 매수했다면 매매일지에 기록하고 만족도를 남겨주세요</p>
             <a href="/journal" class="btn btn-primary">매매일지 바로가기</a>
@@ -52,5 +77,13 @@
 
         <a href="/" class="btn btn-secondary">처음으로 돌아가기</a>
     </div>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/static/js/radar.js"></script>
+    <script>
+        const STOCK_DATA = {{ result | tojson }};
+    </script>
+    <script src="/static/js/compare.js"></script>
+{% endblock %}

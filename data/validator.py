@@ -49,7 +49,7 @@ def validate_stock_data(df, ticker):
 
     return True, "Success"
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
     # 테스트용 정상 데이터
     sample_df = pd.DataFrame({
         'date': ['2026-04-16', '2026-04-17'],

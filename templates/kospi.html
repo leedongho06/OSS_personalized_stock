@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>코스피 TOP 10</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}코스피 TOP 10{% endblock %}
+
+{% block content %}
     <div class="container">
         <header>
             <h1>📊 코스피 TOP 10</h1>
@@ -22,6 +18,24 @@
             </div>
 
             {% if stocks %}
+
+            <!-- 히트맵 -->
+            <div class="heatmap-section">
+                <div class="heatmap-title">📈 등락률 히트맵</div>
+                <div class="heatmap-grid">
+                    {% for stock in stocks %}
+                    <div class="heatmap-cell"
+                         data-rate="{{ stock.change_rate }}"
+                         data-up="{{ 1 if stock.is_up else 0 }}">
+                        <div class="heatmap-name">{{ stock.name }}</div>
+                        <div class="heatmap-rate">
+                            {% if stock.is_up %}+{% endif %}{{ stock.change_rate }}%
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
             <div class="kospi-list">
                 {% for i in range(stocks|length) %}
                 <div class="kospi-item">
@@ -43,14 +57,16 @@
                 </div>
                 {% endfor %}
             </div>
+
             {% else %}
             <p style="text-align:center; color:#718096; padding:2rem;">
                 데이터를 불러올 수 없습니다
             </p>
             {% endif %}
         </div>
-
-        <a href="/" class="btn btn-secondary">메인으로</a>
     </div>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ url_for('static', filename='js/heatmap.js') }}"></script>
+{% endblock %}
