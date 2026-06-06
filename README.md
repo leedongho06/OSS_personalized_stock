@@ -239,3 +239,39 @@ cd cli
 python main.py profile          # 투자 성향 프로파일 입력/저장
 python main.py recommend        # 저장된 프로파일 기반 추천
 ```
+
+## 테스트
+
+`tests/` 디렉터리에 31개의 `pytest` 테스트가 포함되어 있습니다.
+
+```bash
+# 전체 테스트 실행
+pytest
+
+# 상세 출력
+pytest -v
+
+# 특정 모듈만 실행
+pytest tests/test_recommendation.py
+
+# 커버리지 측정 (pytest-cov 설치 시)
+pytest --cov=. --cov-report=term-missing
+```
+
+---
+
+## 라이선스
+
+이 프로젝트는 **MIT License** 하에 배포됩니다. 자세한 내용은 [`LICENSE`](./LICENSE) 파일을 참고하세요.
+
+```
+Copyright (c) 2026 OSS_personalized_stock contributors
+
+자유롭게 사용·복제·수정·배포할 수 있으며, 위 저작권 고지와 라이선스 고지를
+소프트웨어의 모든 사본 또는 상당 부분에 포함해야 합니다.
+```
+
+---
+
+> ⚠️ **면책 조항**: 본 프로젝트는 학습 및 연구 목적의 오픈소스 소프트웨어입니다.
+> 제공되는 추천 결과는 투자 참고용일 뿐이며, 실제 투자에 대한 책임은 전적으로 사용자 본인에게 있습니다.
