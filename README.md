@@ -129,3 +129,22 @@ OSS_personalized_stock/
 - 운영체제: Windows / macOS / Linux
 
 ---
+
+## 설치법
+
+### 1. 저장소 클론
+
+```bash
+git clone https://github.com/leedongho06/OSS_personalized_stock.git
+cd OSS_personalized_stock
+```
+
+### 2. 가상환경 생성 및 활성화 (권장)
+
+```bash
+# 가상환경 생성
+python -m venv venv
+
+# 활성화 — macOS / Linux
+source venv/bin/activate
+```
