@@ -141,6 +141,11 @@ def get_recent_business_day() -> str:
 
 
 def build_stocks_csv():
+    """
+    주식 데이터를 수집하여 CSV로 저장하는 함수입니다.
+    """
+    import os  # os 모듈이 상단에 없다면 여기에 추가해주세요
+    
     today = datetime.today()
     base_date = get_recent_business_day()
     print(f"기준일: {base_date}")
@@ -197,6 +202,11 @@ def build_stocks_csv():
 
         time.sleep(0.2)
 
+    # 💡 [KeyError 방어] 데이터가 아예 수집되지 않았을 경우를 대비
+    if not records:
+        print("수집된 데이터가 없습니다. 저장 과정을 건너뜁니다.")
+        return
+
     df = pd.DataFrame(records)
 
     # 결측값 처리
@@ -204,10 +214,12 @@ def build_stocks_csv():
         df[col] = pd.to_numeric(df[col], errors="coerce")
         df[col] = df[col].fillna(df[col].median())
 
+    # 💡 [AssertionError 방어] 폴더가 없으면 생성하고 저장
+    os.makedirs("data", exist_ok=True)
+    
     df.to_csv("data/stocks.csv", index=False, encoding="utf-8-sig")
     print(f"\n저장 완료: data/stocks.csv ({len(df)}개 종목)")
     print(df.head())
-
 
 if __name__ == "__main__":
     build_stocks_csv()
