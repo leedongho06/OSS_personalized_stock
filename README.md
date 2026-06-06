@@ -66,3 +66,57 @@ CLI와 웹(Flask) 두 가지 인터페이스를 제공하며, 매일 변하는 �
 - **Test**: pytest, unittest
 
 ---
+
+## 프로젝트 구조
+
+```
+OSS_personalized_stock/
+├── main.py                  # CLI 진입점 (대화형 추천 실행)
+├── app.py                   # Flask 웹 애플리케이션 (포트 5000)
+├── web_server.py            # DB 조회용 별도 API 서버 (포트 8080)
+├── check_db.py              # SQLite 테이블 구조 확인 유틸리티
+│
+├── recommendation/          # 추천 엔진
+│   ├── profile.py           #  - 성향별 이상 지표 정의
+│   ├── scorer.py            #  - 관심 기업 → 성향 추론
+│   ├── filter.py            #  - 성향별 종목 필터링
+│   └── recommender.py       #  - 코사인 유사도 Top-N 추천
+│
+├── q_learning/              # 강화학습 모듈
+│   ├── q_table.py           #  - Q-테이블 초기화/저장/로드
+│   ├── agent.py             #  - Action 선택 및 Q값 업데이트
+│   ├── state_encoder.py     #  - (성향, 섹터) → 상태 인코딩
+│   ├── reward.py            #  - 피드백 점수 → 보상 변환
+│   └── train.py             #  - 학습 에피소드 실행
+│
+├── news/                    # 뉴스 수집 및 분류
+│   ├── fetcher.py           #  - Google News RSS 수집
+│   ├── classifier.py        #  - Gemini AI 섹터 분류
+│   ├── interest_scorer.py   #  - 뉴스 관심도 점수 계산
+│   ├── style_inferrer.py    #  - 관심도 → 성향 추론
+│   └── db_manager.py        #  - 뉴스/매매일지 테이블 관리
+│
+├── data/                    # 주가 데이터 수집 파이프라인
+│   ├── build_stocks.py      #  - KOSPI 100종목 stocks.csv 생성
+│   ├── updater.py           #  - 일일 증분 주가 데이터 수집
+│   ├── stocks.csv           #  - 종목 메타데이터 (커밋됨)
+│   └── stock_data.db        #  - 주가 SQLite DB (실행 시 생성)
+│
+├── database/                # DB 매니저 및 스키마
+│   ├── db_manager.py        #  - 주가/사용자 데이터 CRUD
+│   ├── schema.sql           #  - 테이블 스키마 정의
+│   └── init_db.py           #  - DB 초기화
+│
+├── cli/                     # 프로파일 관리용 Click CLI
+│   └── main.py
+│
+├── templates/               # Flask HTML 템플릿
+├── static/                  # CSS / JavaScript
+├── tests/                   # pytest 테스트 (31개 파일)
+│
+├── requirements.txt         # 의존성 목록
+├── LICENSE                  # MIT 라이선스
+└── README.md
+```
+
+---
