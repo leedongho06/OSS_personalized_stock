@@ -82,5 +82,24 @@ class TestApiFetcher(unittest.TestCase):
         mock_validate.assert_called_once()
         mock_save.assert_not_called() # DB 저장 함수가 호출되지 않았음을 깐깐하게 확인!
 
+    # =========================================================
+    # 💡 [핵심 추가 부분] 94-95번 줄 완벽 커버
+    # =========================================================
+    @patch('data.api_fetcher.TICKER_MAP', {"테스트주식": "000000"})
+    @patch('data.api_fetcher.fetch_stock_data')
+    @patch('data.api_fetcher.preprocess_stock_data')
+    def test_run_pipeline_unexpected_exception(self, mock_preprocess, mock_fetch):
+        """개별 종목 처리 중 예상치 못한 에러 발생 시 예외 처리(94~95번 줄) 로직 테스트"""
+        mock_fetch.return_value = pd.DataFrame({"data": [1]})
+        
+        # 💡 전처리 단계에서 강제로 에러를 발생시켜 except 블록으로 빠지게 유도!
+        mock_preprocess.side_effect = Exception("파이프라인 강제 에러 테스트")
+        
+        # 에러가 터져도 전체 프로그램이 멈추지 않고 예외 처리를 타며 무사히 종료되어야 함
+        fetcher.run_fdr_pipeline()
+        
+        mock_fetch.assert_called_once()
+        mock_preprocess.assert_called_once()
+
 if __name__ == '__main__':
     unittest.main()

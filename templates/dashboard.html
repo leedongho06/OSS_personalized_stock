@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}데이터 대시보드{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <header>
+            <h1>🗄️ 데이터 대시보드</h1>
+            <p>DB에 저장된 최신 주가 데이터</p>
+        </header>
+
+        <div class="card">
+            <h2>📋 최신 주가 데이터</h2>
+            {% if stock_data %}
+            <div class="table-scroll">
+                <table class="stock-table">
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>종목코드</th>
+                            <th>시가</th>
+                            <th>고가</th>
+                            <th>저가</th>
+                            <th>종가</th>
+                            <th>거래량</th>
+                            <th>등락률</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in stock_data %}
+                        <tr>
+                            <td>{{ row.Date }}</td>
+                            <td><strong>{{ row.Ticker }}</strong></td>
+                            <td>{{ row.Open }}</td>
+                            <td>{{ row.High }}</td>
+                            <td>{{ row.Low }}</td>
+                            <td>{{ row.Close }}</td>
+                            <td>{{ row.Volume }}</td>
+                            <td>
+                                {% if row.Change is not none %}
+                                    <span class="{% if row.Change > 0 %}profit{% elif row.Change < 0 %}loss{% endif %}">
+                                        {% if row.Change > 0 %}+{% endif %}{{ row.Change }}%
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="text-align:center; color:#718096; padding:2rem;">
+                표시할 데이터가 없습니다
+            </p>
+            {% endif %}
+        </div>
+
+        <a href="/" class="btn btn-secondary">메인으로</a>
+    </div>
+{% endblock %}

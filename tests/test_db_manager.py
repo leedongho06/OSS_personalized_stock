@@ -1,7 +1,7 @@
 import unittest
 import os
 import tempfile
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 # 테스트할 원본 모듈 임포트
 import news.db_manager as dbm
@@ -84,6 +84,24 @@ class TestDBManager(unittest.TestCase):
         
         trades_after = dbm.load_trades()
         self.assertEqual(trades_after[0]["rating"], 5)
+
+    # ==========================================
+    # 💡 89-90번 줄 (예외 처리) 커버 테스트
+    # ==========================================
+    @patch('news.db_manager.sqlite3.connect')
+    def test_get_news_count_exception(self, mock_connect):
+        """DB 조회 중 에러가 발생했을 때 0을 반환하는지 테스트 (89-90번 줄 커버)"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_connect.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        
+        # 핵심: DB에 쿼리를 날릴 때 강제로 Exception 발생!
+        mock_cursor.execute.side_effect = Exception("강제 DB 에러 테스트")
+        
+        # 에러가 나더라도 프로그램이 멈추지 않고 0을 반환하는지 확인
+        count = dbm.get_news_count()
+        self.assertEqual(count, 0)
 
 if __name__ == '__main__':
     unittest.main()

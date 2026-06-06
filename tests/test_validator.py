@@ -1,5 +1,6 @@
 import pytest
 import pandas as pd
+import numpy as np
 from recommendation.validator import DataValidator
 
 # [1] 데이터가 비어있을 때 테스트
@@ -14,6 +15,7 @@ def test_validate_stock_data_missing_columns():
     df = pd.DataFrame({'ticker': ['005930']})
     with pytest.raises(ValueError, match="필수 컬럼이 누락되었습니다"):
         DataValidator.validate_stock_data(df)
+
 # [3] 숫자형 타입 체크 테스트
 def test_validate_stock_data_type_error():
     # 'per' 컬럼이 숫자형이 아닌 문자열인 경우
@@ -31,6 +33,7 @@ def test_validate_stock_data_success():
         'per': [15.2], 'pbr': [1.0], 'ma_20': [70000.0], 'volume': [1000]
     })
     assert DataValidator.validate_stock_data(df) == True
+
 # [5] 피드백 데이터가 비어있을 때 (서비스 초기) 테스트
 def test_validate_feedback_data_empty():
     df = pd.DataFrame()
@@ -40,7 +43,7 @@ def test_validate_feedback_data_empty():
 def test_validate_feedback_data_missing_columns():
     df = pd.DataFrame({'user_id': ['user1']}) # 나머지 필수 컬럼 누락
     with pytest.raises(ValueError, match="피드백 필수 컬럼이 누락되었습니다"):
-        DataValidator.validate_feedback_data(df) # 참고: 여기는 feedback으로 수정해야 할 수도 있음
+        DataValidator.validate_feedback_data(df)
 
 # [7] 선호도 값 범위 에러 테스트
 def test_validate_feedback_preference_error():
@@ -59,3 +62,18 @@ def test_validate_feedback_success():
         'preference': [1], 'reason': ['좋아요']
     })
     assert DataValidator.validate_feedback_data(df) == True
+
+# [9] 주가 데이터 결측치(NaN) 경고문 출력 테스트 (28번 줄 완벽 커버)
+def test_validate_stock_data_nan(capsys):
+    # 'per' 컬럼에 강제로 결측치(NaN) 삽입
+    df = pd.DataFrame({
+        'ticker': ['005930'], 'name': ['삼성'], 'sector': ['IT'],
+        'per': [np.nan], 'pbr': [1.0], 'ma_20': [70000.0], 'volume': [1000]
+    })
+    
+    # 1. 에러 없이 정상적으로 True를 반환하는지 확인
+    assert DataValidator.validate_stock_data(df) is True
+    
+    # 2. 터미널에 28번 줄의 "INFO..." 문구가 잘 출력되었는지 확인
+    captured = capsys.readouterr()
+    assert "INFO: 일부 수치형 데이터에 결측치가 존재하며" in captured.out
